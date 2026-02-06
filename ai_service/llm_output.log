@@ -1,44 +1,44 @@
 [
-  {
-    "event": "Festive Gifting Window",
-    "type": "Gifts & Accessories",
-    "surge": "+80%",
-    "categories": ["Ornaments", "Valentine's Day Cards"],
-    "insight": "Gift-giving has become a norm on Valentine's Day, resulting in a surge of demand for ornaments, cards, and other thematic accessories."
-  },
-  {
-    "event": "Seasonal Refresh",
-    "type": "Home & Lifestyle",
-    "surge": "+40%",
-    "categories": ["Lightweight Bedding", "Air Conditioners"],
-    "insight": "As temperatures rise, customers are increasingly seeking seasonal refreshments, including cooler home essentials like bedding and air conditioners."
-  },
-  {
-    "event": "Academic Ramp-Up",
-    "type": "Stationery & Education Supplies",
-    "surge": "+50%",
-    "categories": ["Notebooks", "Fancy Pens"],
-    "insight": "Board exams are around the corner, driving up demand for essential stationery items, including notebooks and high-quality writing instruments."
-  },
-  {
-    "event": "Ethnic Wear Demand Cycle",
-    "type": "Clothing & Apparel",
-    "surge": "+50%",
-    "categories": ["Traditional Sarees", "Ghanaian Kente Prints"],
-    "insight": "As the festive season approaches, customers are looking for authentic ethnic wear, driving demand for traditional sarees and cultural prints."
-  },
-  {
-    "event": "Celebratory Confections",
-    "type": "Sweets & Bakery",
-    "surge": "+150%",
-    "categories": ["Traditional Desserts", "Pierre Hermé Couture Cakes"],
-    "insight": "Maha Shivaratri is just around the corner, and traditional sweets are fetching high demand, creating an immense surge in demand for premium and delectable confections."
-  },
-  {
-    "event": "Melting Weather Effect",
-    "type": "Food & Beverages",
-    "surge": "+30%",
-    "categories": ["Cooling Drinks", "Low-Calorie Snacks"],
-    "insight": "With warmer spring weather approaching, customers are reaching out for refreshing and light food and beverage options, promoting moderate growth in demand for cooling drinks and low-calorie snacks."
-  }
+    {
+        "event": "Dyeing Demand Surges",
+        "type": "Clothing & Apparel",
+        "surge": "+120%",
+        "categories": ["Dyed fabrics", "Henna-based products"],
+        "insight": "As Maha Shivaratri draws near, demand for dyeing services and henna-based products is anticipated to surge, as devotees seek to adorn themselves with vibrant colors and patterns."
+    },
+    {
+        "event": "Savory Snack Shift",
+        "type": "Food & Beverages",
+        "surge": "+65%",
+        "categories": ["Savory namkeen", "Spiced snacks"],
+        "insight": "With the approaching Board Exams, students and their families are likely to opt for savory snacks over sweet treats to fuel study sessions and exam prep."
+    },
+    {
+        "event": "Spring Refresh",
+        "type": "Home & Lifestyle",
+        "surge": "+35%",
+        "categories": ["Umbrellas", "Raincoats"],
+        "insight": "As the weather transitions to spring, customers are expected to look for seasonal refreshments, such as rain gear and outdoor accessories, to prepare for the changing conditions."
+    },
+    {
+        "event": "Romantic Gifting Cycle",
+        "type": "Gifts & Accessories",
+        "surge": "+90%",
+        "categories": ["Chocolates", "Flowers"],
+        "insight": "Valentine's Day is just around the corner, prompting customers to seek out romantic gifts and accessories, including chocolates and flowers, to express their love and affection."
+    },
+    {
+        "event": "Stationery Supplies Rush",
+        "type": "Stationery & Education Supplies",
+        "surge": "+55%",
+        "categories": ["Notebooks", "Pens"],
+        "insight": "With the Board Exams looming, students and their families are expected to stock up on essential stationery supplies, such as notebooks and pens, to ensure they are well-prepared for the exams."
+    },
+    {
+        "event": "Celebratory Baking",
+        "type": "Sweets & Bakery",
+        "surge": "+145%",
+        "categories": ["Custom cakes", "Sweet pastries"],
+        "insight": "As Maha Shivaratri approaches, the demand for custom cakes and sweet pastries is anticipated to surge, as devotees and families look to indulge in festive treats and celebrate the occasion."
+    }
 ]

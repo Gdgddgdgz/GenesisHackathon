@@ -5,7 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import api, { aiApi } from '../services/api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Dashboard = () => {
     const [stats, setStats] = useState([]);
@@ -18,6 +18,9 @@ const Dashboard = () => {
     const [isBannerVisible, setIsBannerVisible] = useState(true);
     const [replenishStatus, setReplenishStatus] = useState('IDLE');
     const [draftOrder, setDraftOrder] = useState(null);
+
+    const [selectedCategory, setSelectedCategory] = useState('General');
+    const [isInferenceLoading, setIsInferenceLoading] = useState(false);
 
     const handleAutoReplenish = async () => {
         try {
@@ -47,6 +50,17 @@ const Dashboard = () => {
             console.error(err);
             setReplenishStatus('IDLE');
         }
+    };
+
+    const fetchInsights = async (category) => {
+        setIsInferenceLoading(true);
+        try {
+            const res = await aiApi.get(`/forecast/seasonal?category=${category}`);
+            setFestivalData(res.data);
+        } catch (err) {
+            console.error("Inference Error:", err);
+        }
+        setIsInferenceLoading(false);
     };
 
     useEffect(() => {
@@ -89,8 +103,8 @@ const Dashboard = () => {
                 });
                 setChartData(forecast);
 
-                const seasonalRes = await aiApi.get('/forecast/seasonal');
-                setFestivalData(seasonalRes.data);
+                // Initial insights load
+                fetchInsights(selectedCategory);
                 setLoading(false);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
@@ -99,6 +113,12 @@ const Dashboard = () => {
         };
         fetchData();
     }, []);
+
+    const handleCategoryChange = (e) => {
+        const cat = e.target.value;
+        setSelectedCategory(cat);
+        fetchInsights(cat);
+    };
 
     if (loading) return (
         <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
@@ -128,6 +148,44 @@ const Dashboard = () => {
                         <p className="text-[10px] text-slate-500 font-bold uppercase">Quantum Instance</p>
                         <p className="text-sm font-black text-blue-400">ID: SME-X1-ALPHA</p>
                     </div>
+                </div>
+            </div>
+
+            {/* Category Intelligence Selector Area */}
+            <div className="flex items-center gap-6 py-2 border-y border-white/5">
+                <div className="flex-1 flex items-center gap-4">
+                    <div className="p-2 bg-blue-500/10 rounded-lg">
+                        <Globe className="text-blue-500" size={18} />
+                    </div>
+                    <div>
+                        <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Market Intelligence Category</label>
+                        <select
+                            value={selectedCategory}
+                            onChange={handleCategoryChange}
+                            className="bg-transparent text-sm font-bold text-white focus:outline-none border-none p-0 cursor-pointer hover:text-blue-400 transition-colors appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_center] bg-[length:1.2em] bg-no-repeat"
+                        >
+                            <option value="General" className="bg-[#0B1121]">Global Market Signal</option>
+                            <option value="Food & Drinks" className="bg-[#0B1121]">Food & Drinks</option>
+                            <option value="Clothes & Apparel" className="bg-[#0B1121]">Clothes & Apparel</option>
+                            <option value="Stationery & Education" className="bg-[#0B1121]">Stationery & Education</option>
+                            <option value="Electronics" className="bg-[#0B1121]">Electronics</option>
+                            <option value="Home Essentials" className="bg-[#0B1121]">Home Essentials</option>
+                            <option value="Healthcare & Wellness" className="bg-[#0B1121]">Healthcare & Wellness</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="hidden md:flex items-center gap-6 px-6 border-l border-white/5">
+                    <div className="text-right">
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Reasoning Engine</p>
+                        <p className="text-xs font-black text-blue-400 uppercase italic">Meta Llama-3-8B</p>
+                    </div>
+                    {isInferenceLoading && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -274,25 +332,57 @@ const Dashboard = () => {
 
             {/* Strategic Insights Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {festivalData && festivalData.slice(0, 3).map((insight, idx) => (
-                    <motion.div
-                        key={idx}
-                        whileHover={{ y: -5 }}
-                        className="glass-card p-6 border-l-4 border-l-blue-500"
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px] font-black uppercase tracking-tighter">Market Driver</span>
-                            <span className="text-[10px] font-black text-emerald-400">{insight.surge} SURGE</span>
-                        </div>
-                        <h4 className="text-lg font-black text-[var(--text-primary)] mb-2 italic">"{insight.event}"</h4>
-                        <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>
-                        <div className="flex flex-wrap gap-2">
-                            {insight.categories.map((cat, ci) => (
-                                <span key={ci} className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded uppercase">{cat}</span>
-                            ))}
-                        </div>
-                    </motion.div>
-                ))}
+                <AnimatePresence mode="wait">
+                    {isInferenceLoading ? (
+                        [1, 2, 3].map((i) => (
+                            <motion.div
+                                key={`shimmer-${i}`}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="glass-card p-6 border-l-4 border-l-slate-700 h-48 flex flex-col justify-between"
+                            >
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="h-4 w-20 bg-slate-800 rounded animate-pulse"></div>
+                                        <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
+                                    </div>
+                                    <div className="h-6 w-3/4 bg-slate-800 rounded animate-pulse"></div>
+                                    <div className="h-12 w-full bg-slate-800 rounded animate-pulse mt-2"></div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
+                                    <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
+                                </div>
+                            </motion.div>
+                        ))
+                    ) : (
+                        festivalData && festivalData.slice(0, 3).map((insight, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                whileHover={{ y: -5 }}
+                                className="glass-card p-6 border-l-4 border-l-blue-500"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px] font-black uppercase tracking-tighter">{insight.type || 'Market Driver'}</span>
+                                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest pl-0.5">{selectedCategory} Cluster</span>
+                                    </div>
+                                    <span className="text-[10px] font-black text-emerald-400">{insight.surge} SURGE</span>
+                                </div>
+                                <h4 className="text-lg font-black text-[var(--text-primary)] mb-2 italic">"{insight.event}"</h4>
+                                <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {insight.categories.map((cat, ci) => (
+                                        <span key={ci} className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded uppercase">{cat}</span>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        ))
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Telemetry Feed */}
