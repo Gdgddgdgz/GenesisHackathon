@@ -16,7 +16,15 @@ async function processStockUpdate(product_id, type, quantity, reason) {
             [product_id, type, quantity, reason]
         );
 
-        // 2. Update Stock
+        // 2. Update Stock with Validation
+        if (type === 'OUT') {
+            const checkResult = await db.query('SELECT current_stock, name FROM products WHERE id = $1', [product_id]);
+            const product = checkResult.rows[0];
+            if (product.current_stock < quantity) {
+                throw new Error(`Insufficient stock for ${product.name} (Available: ${product.current_stock}, Requested: ${quantity})`);
+            }
+        }
+
         const updateQuery = type === 'IN'
             ? 'UPDATE products SET current_stock = current_stock + $1 WHERE id = $2 RETURNING current_stock, name, unit_price'
             : 'UPDATE products SET current_stock = current_stock - $1 WHERE id = $2 RETURNING current_stock, name, unit_price';

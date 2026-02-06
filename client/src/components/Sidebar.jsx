@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Map, Users, Settings, FileText } from 'lucide-react';
+import { LayoutDashboard, Package, Map, Users, Settings, FileText, Globe, ShoppingCart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Sidebar = () => {
@@ -6,7 +6,10 @@ const Sidebar = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
         { icon: Package, label: 'Inventory', path: '/inventory' },
+
         { icon: Map, label: 'Demand Map', path: '/map' },
+        { icon: Globe, label: 'Location Intel', path: '/map-intel' },
+        { icon: ShoppingCart, label: 'Billing Counter', path: '/billing' },
         { icon: Users, label: 'Vendors', path: '/vendors' },
         { icon: FileText, label: 'Audit Trail', path: '/audit' },
     ];
