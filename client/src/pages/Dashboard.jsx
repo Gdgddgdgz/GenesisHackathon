@@ -94,8 +94,16 @@ const Dashboard = () => {
                 const productsData = inventoryRes.data;
                 setProducts(productsData);
 
+                // 1. Calculate stats dependencies
                 const totalProducts = productsData.length;
                 const lowStock = productsData.filter(p => p.current_stock < 50).length;
+
+                const deadStockItems = productsData.filter(p => {
+                    if (!p.last_sold_date) return false;
+                    const days = (new Date() - new Date(p.last_sold_date)) / (1000 * 60 * 60 * 24);
+                    return days > 90;
+                });
+                setDeadStock(deadStockItems);
 
                 setStats([
                     { title: 'Total Products', value: totalProducts.toString(), icon: Package, trend: 5 },
@@ -120,13 +128,7 @@ const Dashboard = () => {
                 });
                 setChartData(forecast);
 
-                // Dead Stock Detection Logic
-                const deadStockItems = productsData.filter(p => {
-                    if (!p.last_sold_date) return false;
-                    const days = (new Date() - new Date(p.last_sold_date)) / (1000 * 60 * 60 * 24);
-                    return days > 90;
-                });
-                setDeadStock(deadStockItems);
+                // (deadStockItems already calculated above)
 
                 const seasonalRes = await aiApi.get('/forecast/seasonal');
                 setFestivalData(seasonalRes.data);
@@ -289,8 +291,8 @@ const Dashboard = () => {
                                     <div className="flex justify-between items-center mt-2">
                                         <p className="text-[9px] text-slate-400 uppercase tracking-tight font-bold">Gap: {50 - product.current_stock} units</p>
                                         <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase border ${product.price_volatility > 15 ? 'bg-red-50 text-red-600 border-red-100' :
-                                                product.price_volatility > 8 ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                    'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                            product.price_volatility > 8 ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                'bg-emerald-50 text-emerald-600 border-emerald-100'
                                             }`}>
                                             Volatility: {product.price_volatility}% ({product.market_sentiment})
                                         </span>
