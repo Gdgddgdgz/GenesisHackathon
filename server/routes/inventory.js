@@ -34,7 +34,8 @@ async function processStockUpdate(product_id, type, quantity, reason) {
 
         // 3. Check Thresholds & Alert
         const thresholdResult = await db.query('SELECT min_level, max_level FROM thresholds WHERE product_id = $1', [product_id]);
-        const { min_level, max_level } = thresholdResult.rows[0];
+        const threshold = thresholdResult.rows[0] || { min_level: 10, max_level: 100 };
+        const { min_level, max_level } = threshold;
 
         if (newData.current_stock < min_level) {
             const alertMsg = `LOW STOCK ALERT: ${newData.name} is below ${min_level} units!`;
@@ -117,7 +118,7 @@ router.post('/adjust-thresholds', async (req, res) => {
 // GET all products
 router.get('/products', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM products ORDER BY id ASC');
+        const result = await db.query('SELECT * FROM products WHERE user_id = $1 ORDER BY id ASC', [req.user.id]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -141,8 +142,8 @@ router.post('/products', async (req, res) => {
     const { name, sku, category, unit_price, current_stock } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO products (name, sku, category, unit_price, current_stock) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [name, sku, category, unit_price, current_stock || 0]
+            'INSERT INTO products (name, sku, category, unit_price, current_stock, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [name, sku, category, unit_price, current_stock || 0, req.user.id]
         );
         console.log("[API] Product Added:", result.rows[0]); // DEBUG
         // Initialize default thresholds

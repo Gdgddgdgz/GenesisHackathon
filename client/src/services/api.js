@@ -4,6 +4,14 @@ const api = axios.create({
     baseURL: 'http://localhost:5002/api',
 });
 
+api.interceptors.request.use((config) => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+    }
+    return config;
+});
+
 export const aiApi = axios.create({
     baseURL: 'http://localhost:8000',
 });

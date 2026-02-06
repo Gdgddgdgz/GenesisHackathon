@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Package, AlertCircle, TrendingUp, Search, Plus, Trash2 } from 'lucide-react';
+import { Package, AlertCircle, TrendingUp, Search, Plus, Trash2, Filter, Download } from 'lucide-react';
 import api from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Inventory = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
-
     const [showForm, setShowForm] = useState(false);
     const [newProduct, setNewProduct] = useState({ name: '', sku: '', category: '', unit_price: '', current_stock: '' });
 
@@ -38,17 +38,12 @@ const Inventory = () => {
     };
 
     const handleDeleteProduct = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this product?')) return;
+        if (!window.confirm('Delete this asset from the registry?')) return;
         try {
-            const response = await api.delete(`/inventory/products/${id}`);
-            if (response.data && response.data.success) {
-                fetchProducts();
-            } else {
-                alert(`Deletion failed: ${response.data.message || 'Unknown error'}`);
-            }
+            await api.delete(`/inventory/products/${id}`);
+            fetchProducts();
         } catch (err) {
             console.error(err);
-            alert(`Error: ${err.response?.data?.error || err.message}`);
         }
     };
 
@@ -57,128 +52,138 @@ const Inventory = () => {
         p.sku.toLowerCase().includes(filter.toLowerCase())
     );
 
-    if (loading) return <div className="p-8 text-center text-slate-500">Loading Inventory...</div>;
+    if (loading) return (
+        <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
+            <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Syncing Ledger...</p>
+        </div>
+    );
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="space-y-8 pb-20">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800">Inventory Management</h1>
-                    <p className="text-slate-500 mt-1">Real-time stock tracking & adjustments</p>
+                    <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight">Inventory <span className="text-emerald-500">Registry</span></h1>
+                    <p className="text-[var(--text-secondary)] font-medium mt-1">Manage and audit your supply-chain assets</p>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative group flex-1 min-w-[300px]">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] group-focus-within:text-emerald-500 transition-colors" size={18} />
                         <input
                             type="text"
-                            placeholder="Search products..."
-                            className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Search assets by name or SKU..."
+                            className="w-full pl-12 pr-4 py-3.5 bg-[var(--bg-card)] border border-[var(--border-glass)] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all font-semibold text-sm text-[var(--text-primary)]"
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={() => setShowForm(!showForm)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
+                        className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
                     >
-                        <Plus size={18} /> {showForm ? 'Cancel' : 'Add Product'}
+                        <Plus size={18} /> {showForm ? 'Cancel' : 'Register Asset'}
+                    </button>
+                    <button className="p-3.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors text-slate-400">
+                        <Download size={20} />
                     </button>
                 </div>
             </div>
 
-            {showForm && (
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 animate-fade-in">
-                    <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                        <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Product Name</label>
-                            <input type="text" required className="w-full p-2 border rounded" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+            <AnimatePresence>
+                {showForm && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="glass-card p-8 mb-8">
+                            <h2 className="text-xl font-black text-white mb-6">Asset Registration</h2>
+                            <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+                                <div className="lg:col-span-2">
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Asset Name</label>
+                                    <input type="text" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">SKU Code</label>
+                                    <input type="text" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.sku} onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Valuation (₹)</label>
+                                    <input type="number" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.unit_price} onChange={e => setNewProduct({ ...newProduct, unit_price: e.target.value })} />
+                                </div>
+                                <button type="submit" className="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl">Commit</button>
+                            </form>
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">SKU</label>
-                            <input type="text" required className="w-full p-2 border rounded" value={newProduct.sku} onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Category</label>
-                            <input type="text" required className="w-full p-2 border rounded" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Price (₹)</label>
-                            <input type="number" required className="w-full p-2 border rounded" value={newProduct.unit_price} onChange={e => setNewProduct({ ...newProduct, unit_price: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Stock</label>
-                            <input type="number" required className="w-full p-2 border rounded" value={newProduct.current_stock} onChange={e => setNewProduct({ ...newProduct, current_stock: e.target.value })} />
-                        </div>
-                        <button type="submit" className="bg-green-600 text-white p-2 rounded font-medium hover:bg-green-700 w-full">Save</button>
-                    </form>
-                </div>
-            )}
-
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-slate-50 border-b border-slate-100">
-                        <tr>
-                            <th className="p-4 font-semibold text-slate-600">Product Name</th>
-                            <th className="p-4 font-semibold text-slate-600">SKU</th>
-                            <th className="p-4 font-semibold text-slate-600">Category</th>
-                            <th className="p-4 font-semibold text-slate-600">Price</th>
-                            <th className="p-4 font-semibold text-slate-600">Stock Level</th>
-                            <th className="p-4 font-semibold text-slate-600">Status</th>
-                            <th className="p-4 font-semibold text-slate-600 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {filteredProducts.map((product) => (
-                            <tr key={product.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="p-4 font-medium text-slate-800">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-slate-100 p-2 rounded-lg">
-                                            <Package size={20} className="text-slate-500" />
-                                        </div>
-                                        {product.name}
-                                    </div>
-                                </td>
-                                <td className="p-4 text-slate-500 font-mono text-sm">{product.sku}</td>
-                                <td className="p-4 text-slate-600">
-                                    <span className="px-2 py-1 bg-slate-100 rounded-md text-xs font-semibold">{product.category}</span>
-                                </td>
-                                <td className="p-4 text-slate-800 font-medium">₹{product.unit_price}</td>
-                                <td className="p-4">
-                                    <div className="w-full bg-slate-100 rounded-full h-2 mb-1 overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full ${product.current_stock < 50 ? 'bg-red-500' : 'bg-green-500'}`}
-                                            style={{ width: `${Math.min(product.current_stock, 100)}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-xs text-slate-500">{product.current_stock} units</span>
-                                </td>
-                                <td className="p-4">
-                                    {product.current_stock < 50 ? (
-                                        <span className="inline-flex items-center gap-1 text-red-600 text-xs font-bold bg-red-50 px-2 py-1 rounded-full border border-red-100">
-                                            <AlertCircle size={12} /> Low Stock
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1 text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded-full border border-green-100">
-                                            <TrendingUp size={12} /> Healthy
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="p-4 text-right">
-                                    <button
-                                        onClick={() => handleDeleteProduct(product.id)}
-                                        className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-colors"
-                                        title="Delete Product"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {filteredProducts.length === 0 && (
-                    <div className="p-8 text-center text-slate-500">No products found matching your search.</div>
+                    </motion.div>
                 )}
+            </AnimatePresence>
+
+            {/* Table Registry */}
+            <div className="glass-card overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-white/5 border-b border-white/5">
+                            <tr>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Asset Detail</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">SKU Registry</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Category</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Valuation</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status Check</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">Ops</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {filteredProducts.map((product) => (
+                                <tr key={product.id} className="hover:bg-white/[0.02] transition-colors group">
+                                    <td className="p-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-[var(--bg-main)] rounded-xl flex items-center justify-center border border-[var(--border-glass)] group-hover:border-emerald-500/50 transition-colors shadow-sm">
+                                                <Package size={24} className="text-[var(--text-secondary)] group-hover:text-emerald-400 transition-colors" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-[var(--text-primary)] text-lg">{product.name}</p>
+                                                <p className="text-xs text-[var(--text-secondary)]">Node Cluster: BRAVO-9</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-6">
+                                        <span className="font-mono text-xs text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">{product.sku}</span>
+                                    </td>
+                                    <td className="p-6">
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{product.category}</span>
+                                    </td>
+                                    <td className="p-6">
+                                        <p className="font-black text-[var(--text-primary)]">₹{product.unit_price}</p>
+                                    </td>
+                                    <td className="p-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden max-w-[100px]">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${Math.min(product.current_stock, 100)}%` }}
+                                                    className={`h-full rounded-full ${product.current_stock < 50 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                                />
+                                            </div>
+                                            <span className={`text-[10px] font-black uppercase ${product.current_stock < 50 ? 'text-red-400' : 'text-emerald-400'}`}>
+                                                {product.current_stock} Units
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="p-6 text-right">
+                                        <button
+                                            onClick={() => handleDeleteProduct(product.id)}
+                                            className="p-2.5 hover:bg-red-500/10 text-slate-600 hover:text-red-400 rounded-xl transition-all"
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
