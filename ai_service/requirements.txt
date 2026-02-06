@@ -1,6 +1,9 @@
 fastapi
 uvicorn
 pydantic
-prophet
 pandas
 numpy
+chronos-forecasting
+huggingface_hub
+torch
+python-dotenv
