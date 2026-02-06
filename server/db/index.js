@@ -10,7 +10,14 @@ const mockData = {
         { id: 1, user_id: 1, name: 'Premium Cotton Shirt', sku: 'AP-001', category: 'apparel', unit_price: 1200, current_stock: 45, last_sold_date: '2026-02-01', price_volatility: 8, market_sentiment: 'Stable' },
         { id: 2, user_id: 1, name: 'Sports Running Shoes', sku: 'FW-010', category: 'footwear', unit_price: 2500, current_stock: 30, last_sold_date: '2026-01-15', price_volatility: 12, market_sentiment: 'Bullish' },
         { id: 4, user_id: 1, name: 'A4 Notebook (Set of 5)', sku: 'ST-005', category: 'stationery', unit_price: 250, current_stock: 120, last_sold_date: '2026-02-05', price_volatility: 15, market_sentiment: 'Bearish' },
-        { id: 8, user_id: 2, name: 'Assorted Sweets Box', sku: 'SW-001', category: 'sweets_confectionery', unit_price: 600, current_stock: 55, last_sold_date: '2026-02-05', price_volatility: 25, market_sentiment: 'Bullish' }
+        { id: 8, user_id: 2, name: 'Assorted Sweets Box', sku: 'SW-001', category: 'sweets_confectionery', unit_price: 600, current_stock: 55, last_sold_date: '2026-02-05', price_volatility: 25, market_sentiment: 'Bullish' },
+
+        // FLOWERS DEMO DATA
+        { id: 10, user_id: 1, name: 'Red Rose Bouquet (Valentines)', sku: 'FL-001', category: 'Flowers', unit_price: 800, current_stock: 15, last_sold_date: '2026-02-05', price_volatility: 45, market_sentiment: 'Bullish', min_level: 50, max_level: 200 },
+        { id: 11, user_id: 1, name: 'Marigold (Genda) Garland', sku: 'FL-002', category: 'Flowers', unit_price: 40, current_stock: 200, last_sold_date: '2026-02-06', price_volatility: 10, market_sentiment: 'Stable', min_level: 100, max_level: 500 },
+        { id: 12, user_id: 1, name: 'Jasmine (Mogra) Strings', sku: 'FL-003', category: 'Flowers', unit_price: 120, current_stock: 80, last_sold_date: '2026-02-04', price_volatility: 15, market_sentiment: 'Stable', min_level: 50, max_level: 150 },
+        { id: 13, user_id: 1, name: 'Fresh Lotus (Pink)', sku: 'FL-004', category: 'Flowers', unit_price: 250, current_stock: 8, last_sold_date: '2026-02-01', price_volatility: 30, market_sentiment: 'Bullish', min_level: 20, max_level: 50 },
+        { id: 14, user_id: 1, name: 'Hibiscus (Loose)', sku: 'FL-005', category: 'Flowers', unit_price: 25, current_stock: 500, last_sold_date: '2026-02-06', price_volatility: 5, market_sentiment: 'Stable', min_level: 100, max_level: 1000 }
     ],
     thresholds: [
         { product_id: 1, min_level: 50, max_level: 200 },

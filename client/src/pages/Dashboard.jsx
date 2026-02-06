@@ -19,7 +19,7 @@ const Dashboard = () => {
     const [replenishStatus, setReplenishStatus] = useState('IDLE');
     const [draftOrder, setDraftOrder] = useState(null);
 
-    const [selectedCategory, setSelectedCategory] = useState('General');
+    const [selectedCategory, setSelectedCategory] = useState('');
     const [isInferenceLoading, setIsInferenceLoading] = useState(false);
 
     const handleAutoReplenish = async () => {
@@ -164,7 +164,8 @@ const Dashboard = () => {
                             onChange={handleCategoryChange}
                             className="bg-transparent text-sm font-bold text-white focus:outline-none border-none p-0 cursor-pointer hover:text-blue-400 transition-colors appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_center] bg-[length:1.2em] bg-no-repeat"
                         >
-                            <option value="General" className="bg-[#0B1121]">Global Market Signal</option>
+                            <option value="" className="bg-[#0B1121]" disabled>Select what you sell</option>
+                            <option value="Flowers" className="bg-[#0B1121]">Flowers</option>
                             <option value="Food & Drinks" className="bg-[#0B1121]">Food & Drinks</option>
                             <option value="Clothes & Apparel" className="bg-[#0B1121]">Clothes & Apparel</option>
                             <option value="Stationery & Education" className="bg-[#0B1121]">Stationery & Education</option>
@@ -370,7 +371,6 @@ const Dashboard = () => {
                                         <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px] font-black uppercase tracking-tighter">{insight.type || 'Market Driver'}</span>
                                         <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest pl-0.5">{selectedCategory} Cluster</span>
                                     </div>
-                                    <span className="text-[10px] font-black text-emerald-400">{insight.surge} SURGE</span>
                                 </div>
                                 <h4 className="text-lg font-black text-[var(--text-primary)] mb-2 italic">"{insight.event}"</h4>
                                 <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>

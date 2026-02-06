@@ -118,7 +118,7 @@ router.post('/adjust-thresholds', async (req, res) => {
 // GET all products
 router.get('/products', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM products WHERE user_id = $1 ORDER BY id ASC', [req.user.id]);
+        const result = await db.query('SELECT * FROM products ORDER BY id ASC');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });

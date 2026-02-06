@@ -299,6 +299,10 @@ BOUNDARY_MAP = {
     "Healthcare & Wellness": {
         "whitelist": ["medicine", "health", "wellness", "supplement", "hygiene", "pharmacy", "medical", "ayurveda", "clinic", "yoga", "pharma", "mask", "sanitizer"],
         "blacklist": ["food", "clothing", "electronics", "stationery", "apparel", "fashion", "furniture", "gadget"]
+    },
+    "Flowers": {
+        "whitelist": ["rose", "marigold", "genda", "jasmine", "mogra", "lotus", "garland", "bouquet", "wedding", "decoration", "temple", "pooja", "ceremony", "florist", "orchid", "lily", "datura", "bel patra", "hibiscus"],
+        "blacklist": ["food", "clothing", "electronics", "stationery", "apparel", "gadget", "edible", "technology"]
     }
 }
 
@@ -320,9 +324,9 @@ def get_market_context(category):
     # 1. Broad Seasonality & Macro Events (Tagged by Domain)
     # Define signals with [Target Domains] or "ALL"
     macro_events = [
-        {"msg": "SEASON: Spring Transition (Pleasant to Warm). End of Winter.", "domains": ["ALL"]},
-        {"msg": "MACRO EVENT: Peak Indian Wedding Season (Lagan). High demand for ethnic wear, gifting, and jewelry.", "domains": ["Clothes & Apparel", "Food & Drinks", "Home Essentials", "Electronics"]},
-        {"msg": "MACRO EVENT: Board Exam Season (Feb-March). Surge in stationery, anxiety-foods, and student essentials.", "domains": ["Stationery & Education"]}
+        {"msg": "SEASON: Indian Summer Onset. HIGH DEMAND for Cotton/Linen fabrics, Breathable wear, Fan/AC servicing.", "domains": ["Clothes & Apparel", "Electronics", "Home Essentials"]},
+        {"msg": "MACRO EVENT: MANGO SEASON (Alphonso/Kesar). First arrivals in market. Peerless demand.", "domains": ["Food & Drinks", "Gifts"]},
+        {"msg": "MACRO EVENT: Indian Wedding Season (Lagan/Shaadi). High demand for Sherwanis, Lehengas, Gold, Catering, and Varmala/Garlands.", "domains": ["Clothes & Apparel", "Food & Drinks", "Home Essentials", "Electronics", "Flowers"]},
     ]
 
     for event in macro_events:
@@ -341,20 +345,26 @@ def get_market_context(category):
         if 0 <= days_until <= 14:
             # Semantic Filtering for Festivals
             is_relevant = True
-            if "Valentine" in event and category not in ["Food & Drinks", "Clothes & Apparel", "Home Essentials"]: # Gifts
+            if "Valentine" in event and category not in ["Food & Drinks", "Clothes & Apparel", "Home Essentials", "Flowers"]: # Gifts + Flowers
                  is_relevant = False
             if "Ramzan" in event and category not in ["Food & Drinks", "Clothes & Apparel"]:
                  is_relevant = False
-            if "Shivaratri" in event and category not in ["Food & Drinks", "Clothes & Apparel", "Home Essentials"]:
-                 is_relevant = False # Fasting food, temple wear, puja items
+            if "Shivaratri" in event and category not in ["Food & Drinks", "Clothes & Apparel", "Home Essentials", "Flowers"]: # Fasting food, temple wear, puja items, Flowers
+                 is_relevant = False
             
             if is_relevant:
                 if "Valentine" in event:
-                    signals.append(f"EVENT: {event} in {days_until} days. Surge in Gifts, Chocolates, Red/Pink items.")
+                    if category == "Flowers":
+                        signals.append(f"EVENT: {event} in {days_until} days. MASSIVE SURGE in Red Roses & Bouquets.")
+                    else:
+                        signals.append(f"EVENT: {event} in {days_until} days. Surge in Gifts, Chocolates, Red/Pink items.")
                 elif "Ramzan" in event:
-                    signals.append(f"EVENT: {event} approaching ({days_until} days). Stock Iftar essentials.")
+                    signals.append(f"EVENT: {event} approaching ({days_until} days). Stock Iftar essentials (Dates, Rooh Afza).")
                 elif "Shivaratri" in event:
-                    signals.append(f"EVENT: {event} in {days_until} days. Fasting essentials & Thandai.")
+                    if category == "Flowers":
+                        signals.append(f"EVENT: {event} in {days_until} days. Demand for Datura, Bel Patra, Marigold (Genda) for temple offerings.")
+                    else:
+                        signals.append(f"EVENT: {event} in {days_until} days. Fasting essentials & Thandai.")
                 else:
                     signals.append(f"UPCOMING: {event} in {days_until} days.")
 
@@ -380,6 +390,9 @@ def get_seasonal_outlook(category: str = "General"):
     blacklist = sector_rules["blacklist"]
     
     today_date = datetime.now().strftime("%d %B %Y")
+    forecast_start = (datetime.now() + timedelta(days=3)).strftime("%d %B")
+    forecast_end = (datetime.now() + timedelta(days=7)).strftime("%d %B %Y")
+    
     market_signals = get_market_context(category) # Pass category for filtering
     
     # 2. Hard Constraints Prompt
@@ -387,8 +400,9 @@ def get_seasonal_outlook(category: str = "General"):
     [CRITICAL MISSION: ZERO LEAKAGE ARCHITECTURE]
     ACTIVE_CATEGORY: {category}
     CURRENT_DATE: {today_date}
+    TARGET_FORECAST_HORIZON: {forecast_start} to {forecast_end}
     
-    TASK: Generate exactly 3 tactical market predictions for the '{category}' sector ONLY. 
+    TASK: Generate exactly 3 tactical market predictions for the '{category}' sector ONLY for the target horizon. 
     
     HARD CONSTRAINTS:
     - If any prediction references entities outside '{category}', it will be rejected.
@@ -399,8 +413,10 @@ def get_seasonal_outlook(category: str = "General"):
     - Target only items within '{category}'.
     - REAL-TIME MARKET SIGNALS: 
     {market_signals}
-    - REASONING REQUIREMENT: The 'insight' field MUST provide causal reasoning linking the CURRENT DATE ({today_date}) and SIGNALS to the demand.
-    - Be creative.
+    - REASONING REQUIREMENT: The 'insight' field MUST provide causal reasoning for the FORECAST HORIZON ({forecast_start}-{forecast_end}).
+    - INDIAN CONTEXT PROTOCOL: Use Indian terminology (e.g., "Kurta", "Kirana", "Thandai", "Lassi"). Avoid western generic terms. 
+    - REALISM PROTOCOL: AVOID abstract concepts ("vitality", "hues"). FOCUS on tangible inventory ("Stock 50kg", "High velocity").
+    - Be grounded and specific.
     
     OUTPUT FORMAT (Strict JSON list of 3):
     STRICTLY return ONLY the JSON list. Do not include any preamble.
@@ -408,7 +424,6 @@ def get_seasonal_outlook(category: str = "General"):
       {{
         "event": "Event Name",
         "type": "{category}",
-        "surge": "+X%",
         "categories": ["{category} Item 1", "{category} Item 2"],
         "insight": "Reasoning..."
       }}
@@ -423,11 +438,11 @@ def get_seasonal_outlook(category: str = "General"):
             chat_completion = client.chat_completion(
                 model="meta-llama/Meta-Llama-3-8B-Instruct",
                 messages=[
-                    {"role": "system", "content": "You are a supply chain intelligence engine. Output ONLY raw JSON."},
+                    {"role": "system", "content": "You are a pragmatic supply chain analyst. No marketing fluff. Output ONLY raw JSON."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=800,
-                temperature=0.3 + (attempt * 0.1), # Increase creativity if retrying
+                temperature=0.1, # Strict Realism
             )
             response = chat_completion.choices[0].message.content
             print(f"RAW LLM RESPONSE (Attempt {attempt+1}):\n{response[:200]}...\n")
@@ -456,6 +471,7 @@ def get_seasonal_outlook(category: str = "General"):
                     
                     is_item_clean = True
                     if category != "General":
+                        # 1. Blacklist Check
                         for black_word in blacklist:
                             # Use strict word boundary check
                             pattern = r'\\b' + re.escape(black_word.lower()) + r'\\b'
@@ -463,6 +479,18 @@ def get_seasonal_outlook(category: str = "General"):
                                 print(f"VETO: Rejected item '{item.get('event')}' due to forbidden term '{black_word}'")
                                 is_item_clean = False
                                 break
+                        
+                        # 2. STRICT WHITELIST ENFORCEMENT (For Flowers & Others)
+                        if is_item_clean and category == "Flowers":
+                            has_whitelist_term = False
+                            for white_word in whitelist:
+                                if white_word.lower() in content_str:
+                                    has_whitelist_term = True
+                                    break
+                            
+                            if not has_whitelist_term:
+                                print(f"VETO: Rejected item '{item.get('event')}' because it lacks Flowers whitelist terms.")
+                                is_item_clean = False
                     
                     if is_item_clean:
                         # Ensure type consistency
