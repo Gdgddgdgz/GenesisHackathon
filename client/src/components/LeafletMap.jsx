@@ -2,6 +2,7 @@ import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Tooltip, Polygon } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useTheme } from '../context/ThemeContext';
 
 // Fix for default marker icon in React Leaflet
 let DefaultIcon = L.icon({
@@ -14,6 +15,7 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const LeafletMap = ({ points, shopLocation }) => {
+    const { theme } = useTheme();
     // Default center (Mumbai Central) or provided shop location
     const position = shopLocation ? [shopLocation.lat, shopLocation.lon] : [19.0760, 72.8777];
 
@@ -21,7 +23,10 @@ const LeafletMap = ({ points, shopLocation }) => {
         <MapContainer center={position} zoom={13} scrollWheelZoom={false} className="h-full w-full rounded-xl z-0">
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                url={theme === 'dark'
+                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                }
             />
 
             {/* Shop Location */}
@@ -75,22 +80,22 @@ const LeafletMap = ({ points, shopLocation }) => {
                             <Popup>
                                 <div className="p-2 min-w-[220px]">
                                     <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-bold text-slate-800 text-sm">{point.properties.name}</h4>
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${statusLabel === 'High Demand' ? 'bg-red-100 text-red-700' :
-                                            statusLabel === 'Medium Demand' ? 'bg-orange-100 text-orange-700' :
-                                                statusLabel === 'Low Demand' ? 'bg-indigo-100 text-indigo-700' :
-                                                    'bg-sky-100 text-sky-700'
+                                        <h4 className="font-bold text-[var(--text-primary)] text-sm">{point.properties.name}</h4>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${statusLabel === 'High Demand' ? 'bg-red-500/10 text-red-500' :
+                                            statusLabel === 'Medium Demand' ? 'bg-orange-500/10 text-orange-500' :
+                                                statusLabel === 'Low Demand' ? 'bg-indigo-500/10 text-indigo-500' :
+                                                    'bg-blue-500/10 text-blue-500'
                                             }`}>
                                             {statusLabel}
                                         </span>
                                     </div>
-                                    <div className="text-xs text-slate-600 mb-3 flex items-center gap-3">
+                                    <div className="text-xs text-[var(--text-secondary)] mb-3 flex items-center gap-3">
                                         <span><span className="font-bold">Trend:</span> {point.properties.spike}</span>
-                                        <span><span className="font-bold text-blue-600">Proximity:</span> {distance.toFixed(1)} km</span>
+                                        <span><span className="font-bold text-blue-500">Prox:</span> {distance.toFixed(1)} km</span>
                                     </div>
-                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                                        <p className="text-[11px] font-medium text-slate-700 leading-normal">
-                                            <span className="font-bold uppercase text-[9px] block text-slate-400 mb-1">Contextual Insight:</span>
+                                    <div className="bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-glass)] shadow-sm">
+                                        <p className="text-[11px] font-medium text-[var(--text-secondary)] leading-normal opacity-80">
+                                            <span className="font-bold uppercase text-[9px] block opacity-50 mb-1">Contextual Insight:</span>
                                             {point.properties.reason}
                                         </p>
                                     </div>

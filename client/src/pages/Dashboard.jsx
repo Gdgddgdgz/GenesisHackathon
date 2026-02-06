@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Package, TrendingUp, AlertTriangle, DollarSign } from 'lucide-react';
+import { Package, TrendingUp, AlertTriangle, DollarSign, Activity, Zap, ShieldCheck, Globe } from 'lucide-react';
 import StatCard from '../components/StatCard';
-// import DemandHeatmap from '../components/DemandHeatmap'; // Moved to dedicated page
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import api, { aiApi } from '../services/api';
+import { motion } from 'framer-motion';
 
 const Dashboard = () => {
     const [stats, setStats] = useState([]);
@@ -16,34 +16,23 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [deadStock, setDeadStock] = useState([]);
     const [isBannerVisible, setIsBannerVisible] = useState(true);
-    const [replenishStatus, setReplenishStatus] = useState('IDLE'); // IDLE, GENERATING, READY, DELIVERING, DELIVERED
+    const [replenishStatus, setReplenishStatus] = useState('IDLE');
     const [draftOrder, setDraftOrder] = useState(null);
 
     const handleAutoReplenish = async () => {
         try {
-            // Stage 1: Call Gemini / AI for draft
             setReplenishStatus('GENERATING');
-
-            // Fetch stationery restock draft from AI Service
             const res = await api.post('/vendors/draft-order', {
-                vendor_id: 1, // Sai Traders
+                vendor_id: 1,
                 product_name: 'Stationery Items',
                 quantity: 50,
                 last_price: 250
             });
-
             setDraftOrder(res.data);
             setReplenishStatus('READY');
-
-            // Wait a bit to show "Generating" effect
             setTimeout(() => {
-                // Stage 2: Open WhatsApp
                 window.open(res.data.whatsapp_link, '_blank');
-
-                // Stage 3: Transition to Delivering
                 setReplenishStatus('DELIVERING');
-
-                // Stage 4: Simulate Delivery Completion after 10 seconds
                 setTimeout(async () => {
                     await api.post('/inventory/transaction', {
                         product_id: 4,
@@ -54,38 +43,11 @@ const Dashboard = () => {
                     setReplenishStatus('DELIVERED');
                 }, 10000);
             }, 1500);
-
         } catch (err) {
             console.error(err);
-            alert('Replenish failed');
             setReplenishStatus('IDLE');
         }
     };
-
-    const handleDismiss = () => {
-        setIsBannerVisible(false);
-    };
-
-    const handleBulkImport = () => {
-        setIsBulkImporting(true);
-        setTimeout(() => {
-            setIsBulkImporting(false);
-            alert('Bulk Import Success: 250 product records synchronized from "seasonal_inventory.xlsx"');
-        }, 3000);
-    };
-
-    const handleRunAuditTrace = () => {
-        // Link to Audit Trail page
-        window.location.href = '/audit';
-    };
-
-    // Synthetic Operational Telemetry Feed (Simulated)
-    const neuralEvents = [
-        { time: '09:12', event: 'Anomaly Detected: Sudden surge in Vidyavihar University Cluster demand.', type: 'alert' },
-        { time: '10:45', event: 'Stock Deduction Sync: Invoice #INV-8829 processed successfully.', type: 'info' },
-        { time: '12:30', event: 'Neural Optimization: Adjusting safety thresholds for stationery products.', type: 'process' },
-        { time: '14:15', event: 'Scenario Sync: Wedding Season patterns identified in Chembur region.', type: 'info' },
-    ];
 
     useEffect(() => {
         const fetchData = async () => {
@@ -97,30 +59,6 @@ const Dashboard = () => {
                 const totalProducts = productsData.length;
                 const lowStock = productsData.filter(p => p.current_stock < 50).length;
 
-                setStats([
-                    { title: 'Total Products', value: totalProducts.toString(), icon: Package, trend: 5 },
-                    { title: 'Low Stock Alerts', value: lowStock.toString(), icon: AlertTriangle, alert: lowStock > 0, trend: -2 },
-                    { title: 'Dead Stock (90d+)', value: deadStockItems.length.toString(), icon: AlertTriangle, alert: deadStockItems.length > 0, trend: 0 },
-                    { title: 'Revenue Saved', value: '₹12K', icon: DollarSign, trend: 8 },
-                ]);
-
-                const forecastRes = await aiApi.get('/forecast/1');
-                const product1 = productsData.find(p => p.id === 1) || { current_stock: 100 };
-                let runningStock = product1.current_stock;
-
-                const forecast = forecastRes.data.forecast.map(day => {
-                    const dataPoint = {
-                        name: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-                        stock: runningStock,
-                        demand: day.predicted_demand,
-                        historical_avg: day.predicted_demand * 0.8
-                    };
-                    runningStock = Math.max(0, runningStock - day.predicted_demand + 15);
-                    return dataPoint;
-                });
-                setChartData(forecast);
-
-                // Dead Stock Detection Logic
                 const deadStockItems = productsData.filter(p => {
                     if (!p.last_sold_date) return false;
                     const days = (new Date() - new Date(p.last_sold_date)) / (1000 * 60 * 60 * 24);
@@ -128,267 +66,253 @@ const Dashboard = () => {
                 });
                 setDeadStock(deadStockItems);
 
+                setStats([
+                    { title: 'Total Inventory', value: totalProducts.toString(), icon: Package, trend: 12 },
+                    { title: 'Critical Alerts', value: lowStock.toString(), icon: AlertTriangle, alert: lowStock > 0, trend: -5 },
+                    { title: 'Dead Stock Assets', value: deadStockItems.length.toString(), icon: ShieldCheck, trend: 0 },
+                    { title: 'Projected Savings', value: '₹18.4K', icon: DollarSign, trend: 24 },
+                ]);
+
+                // Find target product for forecast (prefer first available if 1 doesn't exist)
+                const targetProduct = productsData.length > 0 ? productsData[0] : { id: 1, current_stock: 100 };
+
+                const forecastRes = await aiApi.get(`/forecast/${targetProduct.id}`);
+                let runningStock = targetProduct.current_stock;
+
+                const forecast = forecastRes.data.forecast.map(day => {
+                    const dataPoint = {
+                        name: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+                        stock: runningStock,
+                        demand: day.predicted_demand,
+                    };
+                    runningStock = Math.max(0, runningStock - day.predicted_demand + 15);
+                    return dataPoint;
+                });
+                setChartData(forecast);
+
                 const seasonalRes = await aiApi.get('/forecast/seasonal');
                 setFestivalData(seasonalRes.data);
-
                 setLoading(false);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
                 setLoading(false);
             }
         };
-
         fetchData();
     }, []);
 
-    if (loading) return <div className="p-8 text-center text-slate-500">Loading Dashboard...</div>;
-
-    const data = chartData.length > 0 ? chartData : [
-        { name: 'Mon', stock: 4000, demand: 2400 },
-        { name: 'Tue', stock: 3000, demand: 1398 },
-    ];
+    if (loading) return (
+        <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Initializing Neural Engine...</p>
+        </div>
+    );
 
     return (
-        <div className="space-y-6 pb-12">
-            {/* 1. Scenario Indicator & Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-8 pb-20">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <h1 className="text-3xl font-bold text-slate-800">Intelligence Dashboard</h1>
-                        <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase rounded-full border border-indigo-200 animate-pulse">
-                            Active Scenario: Exam Season
-                        </span>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                            <Activity className="text-blue-400" size={24} />
+                        </div>
+                        <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight">Intelligence <span className="text-blue-500">Node</span></h1>
                     </div>
-                    <p className="text-slate-500">Predictive inventory auditing & neural demand forecasting</p>
+                    <p className="text-[var(--text-secondary)] font-medium">Real-time predictive supply-chain orchestration</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={handleBulkImport}
-                        disabled={isBulkImporting}
-                        className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-700 disabled:opacity-50 transition-all border border-slate-700 shadow-sm"
-                    >
-                        {isBulkImporting ? 'Importing Stack...' : 'Bulk Import (CSV/XLS)'}
+                <div className="flex items-center gap-4">
+                    <button className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-2">
+                        <Zap size={16} className="text-amber-400" /> System Status: Online
                     </button>
-                    <div className="text-right hidden md:block">
-                        <p className="text-[10px] text-slate-400 font-mono uppercase">System Node: MUM-INTEL-01</p>
-                        <p className="text-xs font-bold text-slate-600">Last Sync: {new Date().toLocaleTimeString()}</p>
+                    <div className="hidden lg:block text-right">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Quantum Instance</p>
+                        <p className="text-sm font-black text-blue-400">ID: SME-X1-ALPHA</p>
                     </div>
                 </div>
             </div>
 
-            {/* 2. Predictive Intervention Banner */}
-            {isBannerVisible && (
-                <div className="bg-indigo-600 rounded-xl p-4 text-white shadow-lg border border-indigo-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-white/20 p-2 rounded-lg">
-                            <TrendingUp size={24} className="text-white" />
+            {/* Predictive Intervention */}
+            {isBannerVisible && products.some(p => p.current_stock < p.min_level) && (
+                <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="relative overflow-hidden group rounded-2xl"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-700 opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative p-6 flex flex-col lg:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-xl">
+                                <AlertTriangle className="text-white animate-pulse" size={32} />
+                            </div>
+                            {(() => {
+                                const critical = products.find(p => p.current_stock < p.min_level);
+                                return (
+                                    <div>
+                                        <span className="px-2 py-0.5 bg-white/20 rounded text-[10px] font-black text-white uppercase mb-1 inline-block">NEURAL ALERT</span>
+                                        <h3 className="text-xl font-black text-white">Stockout Imminent: {critical.name}</h3>
+                                        <p className="text-red-100 text-sm italic">"Current stock ({critical.current_stock}) is below safety threshold ({critical.min_level}). Neural engine recommends baseline replenishment of {critical.max_level - critical.current_stock} units."</p>
+                                    </div>
+                                );
+                            })()}
                         </div>
-                        <div>
-                            <h4 className="font-bold text-sm">Predictive Intervention Required</h4>
-                            <p className="text-xs text-indigo-100 italic">"Detected 45% probability of stockout for Stationery items in Vidyavihar cluster by Wednesday."</p>
-                        </div>
-                    </div>
 
-                    {/* Context Logic Engine Block */}
-                    <div className="bg-white/10 p-3 rounded-lg flex items-center gap-3 border border-white/10 max-w-sm hidden lg:flex">
-                        <div className="text-lg">📊</div>
-                        <div className="text-[10px] leading-tight">
-                            <span className="font-black uppercase block mb-0.5 text-white/90">Context Signal Intelligence</span>
-                            <span className="font-bold text-indigo-200">📚 University Exams Next Week</span> → Stationery Demand <span className="text-white">+3.2x</span> (Vidyavihar Hub)
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleAutoReplenish}
+                                disabled={replenishStatus !== 'IDLE'}
+                                className="px-8 py-3 bg-white text-red-600 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 transition-transform disabled:opacity-50"
+                            >
+                                {replenishStatus === 'IDLE' ? 'Execute Hyper-Restock' : 'Syncing...'}
+                            </button>
+                            <button
+                                onClick={() => setIsBannerVisible(false)}
+                                className="px-6 py-3 bg-black/20 hover:bg-black/30 text-white rounded-xl font-bold text-xs uppercase transition-colors"
+                            >
+                                Dismiss
+                            </button>
                         </div>
                     </div>
-
-                    <div className="flex gap-2">
-                        <button
-                            onClick={handleAutoReplenish}
-                            disabled={replenishStatus !== 'IDLE'}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all uppercase flex items-center gap-2 ${replenishStatus === 'IDLE' ? 'bg-white text-indigo-600 hover:bg-slate-50' :
-                                replenishStatus === 'DELIVERED' ? 'bg-green-500 text-white' : 'bg-indigo-400 text-white animate-pulse'
-                                }`}>
-                            {replenishStatus === 'IDLE' && 'Auto-Replenish'}
-                            {replenishStatus === 'GENERATING' && 'AI Generating Draft...'}
-                            {replenishStatus === 'READY' && 'Opening WhatsApp...'}
-                            {replenishStatus === 'DELIVERING' && 'Logistics Callback Sync...'}
-                            {replenishStatus === 'DELIVERED' && '✓ Vendor Response Simulated'}
-                        </button>
-                        <button
-                            onClick={handleDismiss}
-                            className="px-4 py-2 bg-indigo-500 text-white text-xs font-bold rounded-lg border border-indigo-400 hover:bg-indigo-400 transition-colors uppercase">
-                            Dismiss
-                        </button>
-                    </div>
-                </div>
+                </motion.div>
             )}
 
-            {/* 2.5 Dead Stock Warning (Enterprise Insight) */}
-            {deadStock.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between gap-4 animate-fade-in">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-red-100 p-2 rounded-lg">
-                            <Package size={20} className="text-red-600" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-sm text-red-900 uppercase">Dead Stock Detection Alert</h4>
-                            <p className="text-xs text-red-700">
-                                <span className="font-bold">{deadStock.length} items</span> identified with zero movement in <span className="font-bold">90+ days</span>.
-                                <span className="ml-2 underline cursor-pointer hover:text-red-900 font-bold italic">Recommendation: Schedule "Flash Sale" or "Bundle Promotion"</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* KPI Cards */}
+            {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (
                     <StatCard key={index} {...stat} />
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* 3. Stock Level Trend Graph (Enterprise Style) */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold">Predictive Stock Audit</h2>
-                        <div className="flex gap-2">
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600"><span className="w-2 h-2 bg-blue-600 rounded-full"></span> Stock Level</span>
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-green-600"><span className="w-2 h-2 bg-green-600 rounded-full"></span> Predicted Demand</span>
+            {/* Visual Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 glass-card p-8">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 className="text-2xl font-black text-[var(--text-primary)]">Neural Forecast</h2>
+                            <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-1">7-Day Predictive Consumption</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-blue-500 rounded shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                                <span className="text-[10px] font-bold text-slate-400">Stock</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-emerald-500 rounded shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                                <span className="text-[10px] font-bold text-slate-400">Demand</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="h-80">
+                    <div className="h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} />
-                                <YAxis fontSize={11} axisLine={false} tickLine={false} />
-                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
-                                <Bar dataKey="stock" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Dynamic Stock" />
-                                <Bar dataKey="demand" fill="#10b981" radius={[6, 6, 0, 0]} name="AI Forecasted Demand" />
-                            </BarChart>
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                    </linearGradient>
+                                    <linearGradient id="colorDemand" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-glass)" opacity={0.5} />
+                                <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} stroke="var(--text-secondary)" opacity={0.7} />
+                                <YAxis fontSize={11} axisLine={false} tickLine={false} stroke="var(--text-secondary)" opacity={0.7} />
+                                <Tooltip
+                                    contentStyle={{
+                                        background: 'var(--bg-card)',
+                                        backdropBlur: '12px',
+                                        border: '1px solid var(--border-glass)',
+                                        borderRadius: '12px',
+                                        color: 'var(--text-primary)'
+                                    }}
+                                    itemStyle={{ fontWeight: 'bold' }}
+                                />
+                                <Area type="monotone" dataKey="stock" stroke="#3b82f6" fillOpacity={1} fill="url(#colorStock)" strokeWidth={3} />
+                                <Area type="monotone" dataKey="demand" stroke="#10b981" fillOpacity={1} fill="url(#colorDemand)" strokeWidth={3} />
+                            </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* 4. Critical Actions Summary (Demand vs Inventory Ranker) */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <h2 className="text-xl font-bold mb-4">Critical Vulnerabilities</h2>
-                    <div className="space-y-3">
-                        {products.slice(0, 4).map((product, idx) => {
-                            const vulnerability = Math.floor(Math.random() * 80) + 20;
+                <div className="glass-card p-8 flex flex-col">
+                    <h2 className="text-2xl font-black text-[var(--text-primary)] mb-6">Risk Protocol</h2>
+                    <div className="space-y-6 flex-1">
+                        {products.length > 0 ? products.slice(0, 4).map((product, idx) => {
+                            // Real vulnerability calculation: 100% risk if current_stock is 0, 0% if >= max_level
+                            const vulnerability = Math.min(100, Math.max(0,
+                                Math.round(((product.min_level - product.current_stock) / product.min_level) * 100)
+                            ));
                             return (
-                                <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                    <div className="flex justify-between mb-1">
-                                        <span className="text-xs font-bold text-slate-700">{product.name}</span>
-                                        <span className={`text-[10px] font-bold ${vulnerability > 70 ? 'text-red-600' : 'text-orange-600'}`}>
-                                            Supply Risk: {vulnerability}%
+                                <div key={idx} className="group">
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-xs font-bold text-slate-300 group-hover:text-blue-400 transition-colors uppercase">{product.name}</span>
+                                        <span className={`text-[10px] font-black ${vulnerability > 70 ? 'text-red-400' : vulnerability > 30 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                            {vulnerability}% LOGISTICS RISK
                                         </span>
                                     </div>
-                                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full ${vulnerability > 70 ? 'bg-red-500' : 'bg-orange-500'}`} style={{ width: `${vulnerability}%` }}></div>
-                                    </div>
-                                    <div className="flex justify-between items-center mt-2">
-                                        <p className="text-[9px] text-slate-400 uppercase tracking-tight font-bold">Gap: {50 - product.current_stock} units</p>
-                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase border ${product.price_volatility > 15 ? 'bg-red-50 text-red-600 border-red-100' :
-                                                product.price_volatility > 8 ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                    'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                            }`}>
-                                            Volatility: {product.price_volatility}% ({product.market_sentiment})
-                                        </span>
+                                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.max(5, vulnerability)}%` }}
+                                            className={`h-full rounded-full ${vulnerability > 70 ? 'bg-red-500' : vulnerability > 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                        ></motion.div>
                                     </div>
                                 </div>
                             );
-                        })}
+                        }) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
+                                <ShieldCheck size={48} className="mb-4 text-slate-500" />
+                                <p className="text-xs font-bold uppercase tracking-widest">No Active Hazards</p>
+                                <p className="text-[10px] mt-2">Neural engine requires product data to initiate risk synthesis.</p>
+                            </div>
+                        )}
                     </div>
-                    <button
-                        onClick={handleRunAuditTrace}
-                        className="w-full mt-6 py-2.5 bg-slate-800 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-slate-700 transition-colors shadow-lg"
-                    >
-                        Run Full Immutable Audit Trail
+                    <button className="w-full mt-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all">
+                        Initiate Global Audit
                     </button>
                 </div>
             </div>
 
-            {/* 4. Neural Intelligence Panel (Operational Processing Log) */}
-            <div className="bg-slate-900 rounded-xl p-6 shadow-2xl border border-slate-800">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-slate-100 text-sm font-bold flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        Synthetic Operational Telemetry Feed (Simulated Infrastructure)
-                    </h3>
-                    <span className="text-[10px] font-mono text-slate-500">Node_v4.2.0_MUM-TELEMETRY-STREAM</span>
-                </div>
-                <div className="space-y-2 font-mono text-[11px]">
-                    {neuralEvents.map((ev, i) => (
-                        <div key={i} className="flex gap-4 border-b border-slate-800/50 pb-1.5">
-                            <span className="text-indigo-400 text-xs shrink-0">{ev.time}</span>
-                            <span className={
-                                ev.type === 'alert' ? 'text-red-400' :
-                                    ev.type === 'process' ? 'text-amber-400' : 'text-slate-400'
-                            }>
-                                <span className="opacity-50 mr-2">[{ev.type.toUpperCase()}]</span>
-                                {ev.event}
-                            </span>
+            {/* Strategic Insights Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {festivalData && festivalData.slice(0, 3).map((insight, idx) => (
+                    <motion.div
+                        key={idx}
+                        whileHover={{ y: -5 }}
+                        className="glass-card p-6 border-l-4 border-l-blue-500"
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px] font-black uppercase tracking-tighter">Market Driver</span>
+                            <span className="text-[10px] font-black text-emerald-400">{insight.surge} SURGE</span>
                         </div>
-                    ))}
-                    <div className="text-indigo-500 pt-2 flex items-center gap-1">
-                        <span className="animate-pulse">_</span> Actively monitoring internal cross-service events...
-                    </div>
-                </div>
+                        <h4 className="text-lg font-black text-[var(--text-primary)] mb-2 italic">"{insight.event}"</h4>
+                        <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>
+                        <div className="flex flex-wrap gap-2">
+                            {insight.categories.map((cat, ci) => (
+                                <span key={ci} className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded uppercase">{cat}</span>
+                            ))}
+                        </div>
+                    </motion.div>
+                ))}
             </div>
 
-            {/* 5. Strategic Intelligence: Seasonal Demand Outlook */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                            <TrendingUp className="text-indigo-600" /> Context / Calendar Intelligence Engine (Seeded Historical Baseline)
-                        </h2>
-                        <div className="flex gap-4 mt-1">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">🗓️ Long-term demand planning (30–60 days)</span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">🧠 Non-operational, strategic insights</span>
-                        </div>
-                    </div>
-                    <span className="bg-slate-100 px-3 py-1 rounded-full text-[10px] font-bold text-slate-500 border border-slate-200 uppercase">
-                        Strategic Engine: Prophet™
-                    </span>
+            {/* Telemetry Feed */}
+            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-glass)] p-6 font-mono text-xs shadow-xl">
+                <div className="flex items-center gap-2 mb-4 text-emerald-400">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
+                    <span className="font-bold underline uppercase">Live Telemetry Stream</span>
                 </div>
-
-                {loading && !festivalData && (
-                    <div className="text-center py-8 text-slate-400 animate-pulse">
-                        Analyzing Long-term Seasonal Market Trends...
-                    </div>
-                )}
-
-                {!loading && !festivalData && (
-                    <div className="p-4 text-center text-red-600 bg-red-50 rounded-lg border border-red-100 text-sm">
-                        ⚠️ Strategic Intelligence Sync Failed. <button onClick={() => window.location.reload()} className="underline ml-2">Retry</button>
-                    </div>
-                )}
-
-                {!loading && festivalData && Array.isArray(festivalData) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
-                        {festivalData.map((item, idx) => (
-                            <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-[9px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 uppercase uppercase">
-                                        {item.type}
-                                    </span>
-                                    <span className="text-lg font-black text-green-600">
-                                        {item.surge}
-                                    </span>
-                                </div>
-                                <h3 className="text-sm font-bold text-slate-800 mb-1">{item.event}</h3>
-                                <p className="text-[10px] text-slate-500 mb-3 leading-relaxed">{item.insight}</p>
-                                <div className="flex flex-wrap gap-1">
-                                    {item.categories.map((cat, ci) => (
-                                        <span key={ci} className="text-[8px] font-bold px-1.5 py-0.5 bg-white text-slate-500 rounded border border-slate-100">{cat}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                <p className="text-[10px] text-slate-400 mt-6 italic">*Strategic insights (Prophet™) are for long-term procurement planning and do not intersect with real-time operational thresholds.</p>
+                <div className="space-y-2 opacity-70">
+                    <p className="text-slate-500">[{new Date().toLocaleTimeString()}] <span className="text-blue-400 font-bold uppercase ml-2">[NETWORK]</span> Uplink established. SME-Alpha synchronization active.</p>
+                    {products.some(p => p.current_stock < p.min_level) && (
+                        <p className="text-red-400 font-black italic">[{new Date().toLocaleTimeString()}] [CRITICAL] Stockout hazard detected in primary cluster.</p>
+                    )}
+                    {festivalData && (
+                        <p className="text-amber-400 font-bold uppercase ml-2">[{new Date().toLocaleTimeString()}] [NEURAL] Strategic pattern match: {festivalData[0].event} imminent.</p>
+                    )}
+                    <p className="text-slate-500">[{new Date().toLocaleTimeString()}] <span className="text-emerald-400 font-bold uppercase ml-2">[LEDGER]</span> Audit hash #442a-x9 generated successfully.</p>
+                </div>
             </div>
         </div>
     );

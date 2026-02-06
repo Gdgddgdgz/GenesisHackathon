@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 CREATE TABLE IF NOT EXISTS thresholds (
-  product_id INTEGER REFERENCES products(id),
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
   min_level INTEGER DEFAULT 50,
   max_level INTEGER DEFAULT 200,
   auto_adjust_enabled BOOLEAN DEFAULT TRUE,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS thresholds (
 
 CREATE TABLE IF NOT EXISTS inventory_transactions (
   id SERIAL PRIMARY KEY,
-  product_id INTEGER REFERENCES products(id),
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
   type VARCHAR(20) CHECK (type IN ('IN', 'OUT', 'ADJUST')),
   quantity INTEGER NOT NULL,
   reason VARCHAR(255),
@@ -32,6 +32,7 @@ CREATE INDEX idx_transactions_product_id ON inventory_transactions(product_id);
 
 CREATE TABLE IF NOT EXISTS vendors (
   id SERIAL PRIMARY KEY,
+  user_id INTEGER, -- Not explicitly referenced for mock flexibility, but used in logic
   name VARCHAR(255) NOT NULL,
   phone VARCHAR(20),
   categories TEXT[], -- Array of product categories they supply

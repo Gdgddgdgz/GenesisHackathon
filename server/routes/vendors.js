@@ -6,7 +6,7 @@ const AuditLog = require('../mongo/models/AuditLog');
 // GET all vendors
 router.get('/', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM vendors ORDER BY trust_score DESC');
+        const result = await db.query('SELECT * FROM vendors WHERE user_id = $1 ORDER BY trust_score DESC', [req.user.id]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -18,8 +18,8 @@ router.post('/', async (req, res) => {
     const { name, phone, categories } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO vendors (name, phone, categories) VALUES ($1, $2, $3) RETURNING *',
-            [name, phone, categories]
+            'INSERT INTO vendors (name, phone, categories, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
+            [name, phone, categories, req.user.id]
         );
 
         // Audit Log
@@ -83,11 +83,17 @@ router.post('/:id/trust-adjustment', async (req, res) => {
     const { id } = req.params;
     const { delta, reason } = req.body; // delta: +2, -5, -3 etc.
     try {
-        const result = await db.query('UPDATE VENDORS SET TRUST_SCORE = $1 WHERE ID = $2', [delta, id]);
+        // Fix: Use relative adjustment and RETURNING * to get the new score
+        const result = await db.query(
+            'UPDATE vendors SET trust_score = trust_score + $1 WHERE id = $2 RETURNING *',
+            [delta, id]
+        );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Vendor not found' });
         }
+
+        const updatedVendor = result.rows[0];
 
         // Audit Log
         try {
@@ -95,13 +101,13 @@ router.post('/:id/trust-adjustment', async (req, res) => {
                 action: 'VENDOR_TRUST_UPDATE',
                 entity: 'Vendor',
                 entityId: id,
-                details: { delta, reason, simulated: true }
+                details: { delta, reason, simulated: true, new_score: updatedVendor.trust_score }
             });
         } catch (auditErr) {
             console.error('Audit Log Failed:', auditErr);
         }
 
-        res.json({ success: true, new_score: result.rows[0].trust_score, message: `Trust adjusted: ${reason}` });
+        res.json({ success: true, new_score: updatedVendor.trust_score, message: `Trust adjusted: ${reason}` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
