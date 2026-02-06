@@ -6,27 +6,8 @@ import Vendors from './pages/Vendors';
 import Inventory from './pages/Inventory';
 import GeospatialMap from './pages/GeospatialMap';
 import AuditTrail from './pages/AuditTrail';
-<<<<<<< HEAD
 import MapIntel from './pages/MapIntel';
 import MockBilling from './pages/MockBilling';
-
-function App() {
-  return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/inventory" element={<Inventory />} />
-
-          <Route path="/map" element={<GeospatialMap />} />
-          <Route path="/map-intel" element={<MapIntel />} />
-          <Route path="/billing" element={<MockBilling />} />
-          <Route path="/vendors" element={<Vendors />} />
-          <Route path="/audit" element={<AuditTrail />} />
-        </Routes>
-      </Layout>
-    </Router>
-=======
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -35,7 +16,15 @@ import { ThemeProvider } from './context/ThemeContext';
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
-  if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50 text-slate-500">Authenticating...</div>;
+  if (loading) return (
+    <div className="h-screen w-screen flex items-center justify-center bg-[#0B1121] text-slate-500">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="font-bold tracking-widest uppercase text-xs">Authenticating Nexus...</p>
+      </div>
+    </div>
+  );
+
   if (!user) return <Navigate to="/login" />;
 
   return children;
@@ -56,9 +45,11 @@ function App() {
                   <Layout>
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
-                      <Route path="/vendors" element={<Vendors />} />
                       <Route path="/inventory" element={<Inventory />} />
                       <Route path="/map" element={<GeospatialMap />} />
+                      <Route path="/map-intel" element={<MapIntel />} />
+                      <Route path="/billing" element={<MockBilling />} />
+                      <Route path="/vendors" element={<Vendors />} />
                       <Route path="/audit" element={<AuditTrail />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
@@ -70,7 +61,6 @@ function App() {
         </Router>
       </AuthProvider>
     </ThemeProvider>
->>>>>>> origin/theme-vendor
   );
 }
 
