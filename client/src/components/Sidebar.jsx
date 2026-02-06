@@ -1,9 +1,14 @@
+<<<<<<< HEAD
+import { LayoutDashboard, Package, Map, Users, Settings, FileText, Globe, ShoppingCart } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+=======
 import React from 'react';
-import { LayoutDashboard, Package, Map, Users, Settings, FileText, LogOut, User, Sun, Moon, Globe, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard, Package, Map, Users, Settings, FileText, LogOut, User, Sun, Moon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
+>>>>>>> origin/theme-vendor
 
 const Sidebar = () => {
     const location = useLocation();
@@ -14,11 +19,18 @@ const Sidebar = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
         { icon: Package, label: 'Inventory', path: '/inventory' },
+<<<<<<< HEAD
+
         { icon: Map, label: 'Demand Map', path: '/map' },
         { icon: Globe, label: 'Location Intel', path: '/map-intel' },
         { icon: ShoppingCart, label: 'Billing Counter', path: '/billing' },
         { icon: Users, label: 'Vendors', path: '/vendors' },
         { icon: FileText, label: 'Audit Trail', path: '/audit' },
+=======
+        { icon: Map, label: 'Area Demand', path: '/map' },
+        { icon: Users, label: 'My Suppliers', path: '/vendors' },
+        { icon: FileText, label: 'History', path: '/audit' },
+>>>>>>> origin/theme-vendor
     ];
 
     const handleLogout = () => {
@@ -29,11 +41,9 @@ const Sidebar = () => {
     return (
         <div className="h-screen w-72 glass-sidebar text-white p-6 fixed left-0 top-0 z-50 flex flex-col">
             <div className="flex items-center gap-3 mb-10 px-2">
-                <img
-                    src="/logo.jpg"
-                    alt="Restockery Logo"
-                    className="w-10 h-10 object-contain rounded-xl shadow-lg shadow-blue-600/10 brightness-110"
-                />
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                    <LayoutDashboard className="text-white" size={24} />
+                </div>
                 <div>
                     <h1 className="text-xl font-extrabold tracking-tight">SME Synth</h1>
                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Genesis Hackathon</span>

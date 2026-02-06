@@ -1,0 +1,44 @@
+[
+    {
+        "event": "Spring Refreshments Demand",
+        "type": "Food & Beverages",
+        "surge": "+30%",
+        "categories": ["Iced Teas", "Fresh Juices"],
+        "insight": "Cooler weather is approaching, signaling a rise in demand for refreshing beverages, making it a good time to stock up on these seasonal favorites."
+    },
+    {
+        "event": "Traditional Wear Enthusiasm",
+        "type": "Clothing & Apparel",
+        "surge": "+80%",
+        "categories": ["Embroidered Kurtas", "Handloom Sarees"],
+        "insight": "Expect a surge in traditional wear sales as people prepare for upcoming celebrations, so ensure a robust inventory of classic pieces to meet this demand."
+    },
+    {
+        "event": "Exam Prep Supplies",
+        "type": "Stationery & Education Supplies",
+        "surge": "+150%",
+        "categories": ["Notebooks", "Math Calculators"],
+        "insight": "Board Exams are near, triggering a significant increase in demand for essential stationery and education supplies; replenish stock to meet the exam prep needs of students and parents."
+    },
+    {
+        "event": "Sweet Gift Baskets",
+        "type": "Sweets & Bakery",
+        "surge": "+50%",
+        "categories": ["Gifting Hampers", "Custom Cakes"],
+        "insight": "Valentine's Day approaches, driving a notable increase in demand for sweet treats and gift baskets; prepare to meet the surge in orders by prioritizing inventory and production."
+    },
+    {
+        "event": "Lightweight Fabrics Popularity",
+        "type": "Clothing & Apparel",
+        "surge": "+40%",
+        "categories": ["Cotton Sarees", "Linen Shirts"],
+        "insight": "As temperatures rise, customer interest in breathable, lightweight fabrics is growing; ensure a diverse range of these pieces to cater to the changing needs of your customers."
+    },
+    {
+        "event": "Home Refreshments Essentials",
+        "type": "Home & Lifestyle",
+        "surge": "+20%",
+        "categories": ["Air Purifiers", "Personal Care Items"],
+        "insight": "The approaching spring weather transition prompts a moderate increase in demand for home and lifestyle essentials; maintain a steady supply of relevant products to meet this demand."
+    }
+]

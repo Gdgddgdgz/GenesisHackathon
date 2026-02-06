@@ -66,6 +66,35 @@ const Dashboard = () => {
                     return days > 90;
                 });
                 setDeadStock(deadStockItems);
+<<<<<<< HEAD
+
+                setStats([
+                    { title: 'Total Products', value: totalProducts.toString(), icon: Package, trend: 5 },
+                    { title: 'Low Stock Alerts', value: lowStock.toString(), icon: AlertTriangle, alert: lowStock > 0, trend: -2 },
+                    { title: 'Dead Stock (90d+)', value: deadStockItems.length.toString(), icon: AlertTriangle, alert: deadStockItems.length > 0, trend: 0 },
+                    { title: 'Revenue Saved', value: '₹12K', icon: DollarSign, trend: 8 },
+                ]);
+
+                const forecastRes = await aiApi.get('/forecast/1');
+                const product1 = productsData.find(p => p.id === 1) || { current_stock: 100 };
+                let runningStock = product1.current_stock;
+
+                const forecast = forecastRes.data.forecast.map(day => {
+                    const dataPoint = {
+                        name: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+                        stock: runningStock,
+                        demand: day.predicted_demand,
+                        historical_avg: day.predicted_demand * 0.8
+                    };
+                    runningStock = Math.max(0, runningStock - day.predicted_demand + 15);
+                    return dataPoint;
+                });
+                setChartData(forecast);
+
+                // (deadStockItems already calculated above)
+=======
+>>>>>>> origin/theme-vendor
+
                 setStats([
                     { title: 'Total Inventory', value: totalProducts.toString(), icon: Package, trend: 12 },
                     { title: 'Critical Alerts', value: lowStock.toString(), icon: AlertTriangle, alert: lowStock > 0, trend: -5 },
@@ -73,7 +102,9 @@ const Dashboard = () => {
                     { title: 'Projected Savings', value: '₹18.4K', icon: DollarSign, trend: 24 },
                 ]);
 
+                // Find target product for forecast (prefer first available if 1 doesn't exist)
                 const targetProduct = productsData.length > 0 ? productsData[0] : { id: 1, current_stock: 100 };
+
                 const forecastRes = await aiApi.get(`/forecast/${targetProduct.id}`);
                 let runningStock = targetProduct.current_stock;
 
@@ -249,65 +280,68 @@ const Dashboard = () => {
                                             {vulnerability}% LOGISTICS RISK
                                         </span>
                                     </div>
-                                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${Math.max(5, vulnerability)}%` }}
-                                            className={`h-full rounded-full ${vulnerability > 70 ? 'bg-red-500' : vulnerability > 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                                        />
+<<<<<<< HEAD
+                                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full ${vulnerability > 70 ? 'bg-red-500' : 'bg-orange-500'}`} style={{ width: `${vulnerability}%` }}></div>
                                     </div>
                                     <div className="flex justify-between items-center mt-2">
-                                        <p className="text-[9px] text-slate-400 uppercase tracking-tight font-bold">Gap: {product.min_level - product.current_stock} units</p>
-                                        {product.price_volatility && (
-                                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase border ${product.price_volatility > 15 ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                product.price_volatility > 8 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                }`}>
-                                                Volatility: {product.price_volatility}%
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                                        <p className="text-[9px] text-slate-400 uppercase tracking-tight font-bold">Gap: {50 - product.current_stock} units</p>
+                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase border ${product.price_volatility > 15 ? 'bg-red-50 text-red-600 border-red-100' :
+                                            product.price_volatility > 8 ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                            }`}>
+                                            Volatility: {product.price_volatility}% ({product.market_sentiment})
+                                        </span>
+=======
+                                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.max(5, vulnerability)}%` }}
+                    className={`h-full rounded-full ${vulnerability > 70 ? 'bg-red-500' : vulnerability > 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                ></motion.div>
+>>>>>>> origin/theme-vendor
+            </div>
+        </div>
                             );
                         }) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
-                                <ShieldCheck size={48} className="mb-4 text-slate-500" />
-                                <p className="text-xs font-bold uppercase tracking-widest">No Active Hazards</p>
-                                <p className="text-[10px] mt-2">Neural engine requires product data to initiate risk synthesis.</p>
-                            </div>
-                        )}
+    <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
+        <ShieldCheck size={48} className="mb-4 text-slate-500" />
+        <p className="text-xs font-bold uppercase tracking-widest">No Active Hazards</p>
+        <p className="text-[10px] mt-2">Neural engine requires product data to initiate risk synthesis.</p>
+    </div>
+)}
                     </div >
-                    <button className="w-full mt-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all">
-                        Initiate Global Audit
-                    </button>
+    <button className="w-full mt-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all">
+        Initiate Global Audit
+    </button>
                 </div >
             </div >
 
-            {/* Strategic Insights Grid */}
-            < div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" >
-                {festivalData && festivalData.slice(0, 3).map((insight, idx) => (
-                    <motion.div
-                        key={idx}
-                        whileHover={{ y: -5 }}
-                        className="glass-card p-6 border-l-4 border-l-blue-500"
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px] font-black uppercase tracking-tighter">Market Driver</span>
-                            <span className="text-[10px] font-black text-emerald-400">{insight.surge} SURGE</span>
-                        </div>
-                        <h4 className="text-lg font-black text-[var(--text-primary)] mb-2 italic">"{insight.event}"</h4>
-                        <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>
-                        <div className="flex flex-wrap gap-2">
-                            {insight.categories.map((cat, ci) => (
-                                <span key={ci} className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded uppercase">{cat}</span>
-                            ))}
-                        </div>
-                    </motion.div>
-                ))}
+    {/* Strategic Insights Grid */ }
+    < div className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" >
+        { festivalData && festivalData.slice(0, 3).map((insight, idx) => (
+            <motion.div
+                key={idx}
+                whileHover={{ y: -5 }}
+                className="glass-card p-6 border-l-4 border-l-blue-500"
+            >
+                <div className="flex justify-between items-start mb-4">
+                    <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px] font-black uppercase tracking-tighter">Market Driver</span>
+                    <span className="text-[10px] font-black text-emerald-400">{insight.surge} SURGE</span>
+                </div>
+                <h4 className="text-lg font-black text-[var(--text-primary)] mb-2 italic">"{insight.event}"</h4>
+                <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>
+                <div className="flex flex-wrap gap-2">
+                    {insight.categories.map((cat, ci) => (
+                        <span key={ci} className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded uppercase">{cat}</span>
+                    ))}
+                </div>
+            </motion.div>
+        ))}
             </div >
 
-            {/* Telemetry Feed */}
-            < div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-glass)] p-6 font-mono text-xs shadow-xl" >
+    {/* Telemetry Feed */ }
+    < div className = "bg-[var(--bg-card)] rounded-2xl border border-[var(--border-glass)] p-6 font-mono text-xs shadow-xl" >
                 <div className="flex items-center gap-2 mb-4 text-emerald-400">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
                     <span className="font-bold underline uppercase">Live Telemetry Stream</span>

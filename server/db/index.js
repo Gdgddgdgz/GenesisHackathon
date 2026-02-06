@@ -31,6 +31,17 @@ const query = async (text, params = []) => {
 
     console.log(`[MockDB] SQL: "${sql}" | Params:`, params);
 
+<<<<<<< HEAD
+    // 1. Get All Products / Filtered
+    if (sql.includes('SELECT * FROM PRODUCTS') || sql.includes('FROM PRODUCTS P LEFT JOIN THRESHOLDS T')) {
+        // Return products enriched with threshold data
+        return {
+            rows: mockData.products.map(p => ({
+                ...p,
+                min_level: mockData.thresholds.find(t => t.product_id === p.id)?.min_level
+            }))
+        };
+=======
     // 1. Get All Products / Filtered by User
     if (sql.includes('SELECT * FROM PRODUCTS')) {
         let products = mockData.products;
@@ -45,6 +56,7 @@ const query = async (text, params = []) => {
             return { ...p, ...t };
         });
         return { rows: enriched };
+>>>>>>> origin/theme-vendor
     }
 
     // 2. Create Product (with user_id)

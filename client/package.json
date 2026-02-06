@@ -10,10 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@turf/circle": "^7.3.3",
     "@turf/distance": "^7.3.3",
     "@turf/turf": "^7.3.3",
+=======
     "@hookform/resolvers": "^5.2.2",
+>>>>>>> origin/theme-vendor
     "axios": "^1.13.4",
     "framer-motion": "^12.33.0",
     "leaflet": "^1.9.4",

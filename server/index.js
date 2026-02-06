@@ -39,14 +39,22 @@ const authRoutes = require('./routes/auth');
 const inventoryRoutes = require('./routes/inventory');
 const vendorRoutes = require('./routes/vendors');
 const billingRoutes = require('./routes/billing');
+<<<<<<< HEAD
 const intelRoutes = require('./routes/intel');
+
+app.use('/api/inventory', inventoryRoutes);
+
+app.use('/api/vendors', vendorRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/intel', intelRoutes);
+=======
 const { protect } = require('./middleware/auth');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', protect, inventoryRoutes);
 app.use('/api/vendors', protect, vendorRoutes);
 app.use('/api/billing', protect, billingRoutes);
-app.use('/api/intel', protect, intelRoutes);
+>>>>>>> origin/theme-vendor
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

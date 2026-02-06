@@ -6,12 +6,31 @@ import Vendors from './pages/Vendors';
 import Inventory from './pages/Inventory';
 import GeospatialMap from './pages/GeospatialMap';
 import AuditTrail from './pages/AuditTrail';
+<<<<<<< HEAD
 import MapIntel from './pages/MapIntel';
 import MockBilling from './pages/MockBilling';
+
+function App() {
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/inventory" element={<Inventory />} />
+
+          <Route path="/map" element={<GeospatialMap />} />
+          <Route path="/map-intel" element={<MapIntel />} />
+          <Route path="/billing" element={<MockBilling />} />
+          <Route path="/vendors" element={<Vendors />} />
+          <Route path="/audit" element={<AuditTrail />} />
+        </Routes>
+      </Layout>
+    </Router>
+=======
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeProvider'; // Use ThemeProvider if it exists in theme-vendor
+import { ThemeProvider } from './context/ThemeContext';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -37,11 +56,9 @@ function App() {
                   <Layout>
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
+                      <Route path="/vendors" element={<Vendors />} />
                       <Route path="/inventory" element={<Inventory />} />
                       <Route path="/map" element={<GeospatialMap />} />
-                      <Route path="/map-intel" element={<MapIntel />} />
-                      <Route path="/billing" element={<MockBilling />} />
-                      <Route path="/vendors" element={<Vendors />} />
                       <Route path="/audit" element={<AuditTrail />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
@@ -53,6 +70,7 @@ function App() {
         </Router>
       </AuthProvider>
     </ThemeProvider>
+>>>>>>> origin/theme-vendor
   );
 }
 
