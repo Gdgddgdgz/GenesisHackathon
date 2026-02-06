@@ -6,6 +6,7 @@ import Vendors from './pages/Vendors';
 import Inventory from './pages/Inventory';
 import GeospatialMap from './pages/GeospatialMap';
 import AuditTrail from './pages/AuditTrail';
+import Outlets from './pages/Outlets';
 import MapIntel from './pages/MapIntel';
 import MockBilling from './pages/MockBilling';
 import Login from './pages/Login';
@@ -47,10 +48,10 @@ function App() {
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/inventory" element={<Inventory />} />
                       <Route path="/map" element={<GeospatialMap />} />
-                      <Route path="/map-intel" element={<MapIntel />} />
                       <Route path="/billing" element={<MockBilling />} />
                       <Route path="/vendors" element={<Vendors />} />
                       <Route path="/audit" element={<AuditTrail />} />
+                      <Route path="/outlets" element={<Outlets />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </Layout>

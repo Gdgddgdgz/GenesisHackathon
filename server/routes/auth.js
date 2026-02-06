@@ -13,7 +13,7 @@ const findUserByEmail = async (email) => {
 
 // POST /api/auth/signup
 router.post('/signup', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, location, geo } = req.body;
 
     try {
         const userExists = await findUserByEmail(email);
@@ -22,9 +22,10 @@ router.post('/signup', async (req, res) => {
         }
 
         const hashedPassword = await hashPassword(password);
+        const geoJson = geo != null ? JSON.stringify(geo) : null;
 
-        // Mocking the insert
-        const result = await db.query('INSERT INTO USERS (name, email, password) VALUES ($1, $2, $3) RETURNING *', [name, email, hashedPassword]);
+        // Mocking the insert (location and geo stored in DB)
+        const result = await db.query('INSERT INTO USERS (name, email, password, location, geo) VALUES ($1, $2, $3, $4, $5) RETURNING *', [name, email, hashedPassword, location || null, geoJson]);
         const newUser = result.rows[0];
 
         // SEED DEMO DATA FOR NEW USER (Mock Only)

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Radar, Layers, MapPin, GraduationCap, Church, ShoppingBag, TreePine, Home } from 'lucide-react';
 import LeafletMap from '../components/LeafletMap';
+import api from '../services/api';
 
 const CATEGORIES = [
     { label: 'Education', color: '#F59E0B', desc: 'Schools, Unis' },
@@ -15,21 +16,64 @@ const CATEGORIES = [
 const GeospatialMap = () => {
     const [points, setPoints] = useState([]);
     const [shopLocation, setShopLocation] = useState(null);
+    const [userLocations, setUserLocations] = useState([]); // outlets + custom pins
     const [institutions, setInstitutions] = useState([]);
     const [activePointer, setActivePointer] = useState(null);
+    const [customPins, setCustomPins] = useState([]); // user-added pins (lat, lng)
     const [isScanning, setIsScanning] = useState(false);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('Groceries');
     const [colorMapping, setColorMapping] = useState(null);
+    const initialLoadDone = useRef(false);
 
+    // --- Overpass scan (reused for initial load and map clicks) ---
+    const runOverpassScan = async (lat, lng) => {
+        const query = `[out:json][timeout:25];
+        (
+          way["landuse"~"residential|commercial|retail"](around:4800,${lat},${lng});
+          node["amenity"~"school|college|university|place_of_worship"](around:4800,${lat},${lng});
+          way["amenity"~"school|college|university|place_of_worship"](around:4800,${lat},${lng});
+          node["shop"~"mall|supermarket|department_store"](around:4800,${lat},${lng});
+          way["leisure"~"park|garden|playground"](around:4800,${lat},${lng});
+        );
+        out center;`;
+        try {
+            const res = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+            const cleaned = (res.data.elements || []).map(el => {
+                const tags = el.tags || {};
+                const rawType = tags.amenity || tags.shop || tags.leisure || tags.landuse || "place";
+                return {
+                    id: el.id,
+                    lat: el.lat || el.center?.lat,
+                    lon: el.lon || el.center?.lon,
+                    type: rawType.toUpperCase().replace(/ /g, '_'),
+                    rawType: rawType.replace(/_/g, ' '),
+                    name: tags.name || `Unnamed ${rawType.replace(/_/g, ' ')}`,
+                    tags: tags
+                };
+            }).filter(item => item.lat && item.lon);
+            setInstitutions(cleaned);
+        } catch (err) {
+            if (!axios.isCancel(err)) console.error("Overpass error:", err);
+        } finally {
+            setIsScanning(false);
+        }
+    };
 
     // --- 1. Fetch Heatmap Data (Backend) ---
     const fetchHeatmap = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:8000/heatmap?segment=${selectedCategory}`);
+            const lat = shopLocation?.lat;
+            const lon = shopLocation?.lon;
+            const params = new URLSearchParams({ segment: selectedCategory });
+            if (lat != null && lon != null) {
+                params.set('lat', lat);
+                params.set('lon', lon);
+            }
+            const res = await axios.get(`http://localhost:8000/heatmap?${params.toString()}`);
             setPoints(res.data.features);
-            setShopLocation(res.data.shop_location);
+            if (res.data.shop_location) setShopLocation(res.data.shop_location);
         } catch (error) {
             console.error("Backend offline:", error);
         }
@@ -52,55 +96,16 @@ const GeospatialMap = () => {
         }
     };
 
-    // --- 2. Handle Map Clicks & Overpass Query ---
-    const abortControllerRef = React.useRef(null);
+    // --- 2. Handle Map Clicks: add pin + run Overpass ---
     const handleMapClick = async (lat, lng) => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-
-        // 3. Create a new controller for the current request
-        abortControllerRef.current = new AbortController();
-
         setActivePointer({ lat, lng });
+        setCustomPins(prev => {
+            const key = `${lat.toFixed(5)}-${lng.toFixed(5)}`;
+            if (prev.some(p => `${p.lat.toFixed(5)}-${p.lon.toFixed(5)}` === key)) return prev;
+            return [...prev, { lat, lng, name: `Pin ${prev.length + 1}`, id: `custom-${Date.now()}` }];
+        });
         setIsScanning(true);
-
-        const query = `[out:json][timeout:25];
-        (
-          way["landuse"~"residential|commercial|retail"](around:4800,${lat},${lng});
-          node["amenity"~"school|college|university|place_of_worship"](around:4800,${lat},${lng});
-          way["amenity"~"school|college|university|place_of_worship"](around:4800,${lat},${lng});
-          node["shop"~"mall|supermarket|department_store"](around:4800,${lat},${lng});
-          way["leisure"~"park|garden|playground"](around:4800,${lat},${lng});
-        );
-        out center;`;
-
-        try {
-            const res = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, {
-                signal: abortControllerRef.current.signal
-            });
-
-            // Clean the data immediately
-            const cleaned = (res.data.elements || []).map(el => {
-                const tags = el.tags || {};
-                const rawType = tags.amenity || tags.shop || tags.leisure || tags.landuse || "place";
-                return {
-                    id: el.id,
-                    lat: el.lat || el.center?.lat,
-                    lon: el.lon || el.center?.lon,
-                    type: rawType.toUpperCase().replace(/ /g, '_'), // Normalize for interpreter
-                    rawType: rawType.replace(/_/g, ' '),
-                    name: tags.name || `Unnamed ${rawType.replace(/_/g, ' ')}`,
-                    tags: tags
-                };
-            }).filter(item => item.lat && item.lon);
-
-            setInstitutions(cleaned);
-        } catch (err) {
-            if (!axios.isCancel(err)) console.error("Overpass error:", err);
-        } finally {
-            setIsScanning(false);
-        }
+        await runOverpassScan(lat, lng);
     };
 
     const handleAddressSearch = async (address) => {
@@ -127,7 +132,58 @@ const GeospatialMap = () => {
         }
     };
 
+    // Initial load: user outlets → first location scan → heatmap
     useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            setLoading(true);
+            try {
+                const outletsRes = await api.get('/outlets').catch(() => ({ data: [] }));
+                const outlets = outletsRes.data || [];
+                const withCoords = outlets.filter(o => o.lat != null && o.lon != null);
+                if (!cancelled) {
+                    setUserLocations(withCoords.map(o => ({ lat: o.lat, lon: o.lon, name: o.location || o.geo_display_name, id: `outlet-${o.id}` })));
+                }
+                let lat = null, lon = null;
+                if (withCoords.length > 0) {
+                    const first = withCoords[0];
+                    lat = first.lat;
+                    lon = first.lon;
+                    if (!cancelled) {
+                        setShopLocation({ lat, lon });
+                        setActivePointer({ lat, lon });
+                    }
+                    setIsScanning(true);
+                    await runOverpassScan(lat, lon);
+                    if (cancelled) return;
+                }
+                const params = new URLSearchParams({ segment: selectedCategory });
+                if (lat != null && lon != null) {
+                    params.set('lat', lat);
+                    params.set('lon', lon);
+                }
+                const res = await axios.get(`http://localhost:8000/heatmap?${params.toString()}`);
+                if (!cancelled) {
+                    setPoints(res.data.features);
+                    if (res.data.shop_location) setShopLocation(res.data.shop_location);
+                }
+            } catch (e) {
+                if (!cancelled) {
+                    setPoints([]);
+                    setShopLocation(s => s || { lat: 19.076, lon: 72.8777 });
+                }
+            }
+            if (!cancelled) setLoading(false);
+            fetchAIInterpretation();
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    useEffect(() => {
+        if (!initialLoadDone.current) {
+            initialLoadDone.current = true;
+            return;
+        }
         fetchHeatmap();
         fetchAIInterpretation();
     }, [selectedCategory]);
@@ -216,8 +272,8 @@ const GeospatialMap = () => {
                 </div>
 
 
-                {/* Map Container */}
-                <div className="flex-1 glass-card relative rounded-xl overflow-hidden border border-white/10">
+                {/* Map Container — explicit min-height so Leaflet renders */}
+                <div className="flex-1 min-h-[400px] glass-card relative rounded-xl overflow-hidden border border-white/10">
                     {(loading || isScanning) && (
                         <div className="absolute inset-0 z-[1000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center">
                             <div className="text-center">
@@ -231,6 +287,7 @@ const GeospatialMap = () => {
                     <LeafletMap
                         points={points}
                         shopLocation={shopLocation}
+                        userPins={[...userLocations, ...customPins]}
                         onMapClick={handleMapClick}
                         activePointer={activePointer}
                         institutions={institutions}

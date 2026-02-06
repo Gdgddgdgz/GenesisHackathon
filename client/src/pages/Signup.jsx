@@ -4,13 +4,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { UserPlus, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { UserPlus, Mail, Lock, User, AlertCircle, Loader2, MapPin } from 'lucide-react';
 
 const schema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Invalid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
+    location: z.string().min(5, 'Please enter a more specific location'), // New Field
 });
 
 const Signup = () => {
@@ -27,7 +28,14 @@ const Signup = () => {
         setIsLoading(true);
         setError('');
         try {
-            await signup(data.name, data.email, data.password);
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(data.location)}`
+            );
+            const geoResults = await res.json();
+            const geo = Array.isArray(geoResults) && geoResults.length > 0
+                ? { lat: parseFloat(geoResults[0].lat), lon: parseFloat(geoResults[0].lon), display_name: geoResults[0].display_name }
+                : null;
+            await signup(data.name, data.email, data.password, data.location, geo);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.error || 'Registration failed');
@@ -94,6 +102,26 @@ const Signup = () => {
                             />
                         </div>
                         {errors.email && <p className="text-red-400 text-[10px] mt-1.5 font-bold uppercase ml-1">{errors.email.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1.5 ml-1">
+                            Main Outlet Location
+                        </label>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] opacity-50" size={18} />
+                            <input
+                                {...register('location')}
+                                type="text"
+                                placeholder="e.g. 123 Business Bay, Mumbai"
+                                className="w-full pl-12 pr-4 py-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium"
+                            />
+                        </div>
+                        {errors.location && (
+                            <p className="text-red-400 text-[10px] mt-1.5 font-bold uppercase ml-1">
+                                {errors.location.message}
+                            </p>
+                        )}
                     </div>
 
                     <div>

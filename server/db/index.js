@@ -3,9 +3,10 @@
 
 const mockData = {
     users: [
-        { id: 1, email: 'admin@sme.com', password: '$2a$10$YourHashedPasswordHere', name: 'Admin User' },
-        { id: 2, email: 'user@sme.com', password: '$2a$10$YourHashedPasswordHere', name: 'Demo User' }
+        { id: 1, email: 'admin@sme.com', password: '$2a$10$YourHashedPasswordHere', name: 'Admin User', location: null, geo: null },
+        { id: 2, email: 'user@sme.com', password: '$2a$10$YourHashedPasswordHere', name: 'Demo User', location: null, geo: null }
     ],
+    outlets: [],
     products: [
         { id: 1, user_id: 1, name: 'Premium Cotton Shirt', sku: 'AP-001', category: 'apparel', unit_price: 1200, current_stock: 45, last_sold_date: '2026-02-01', price_volatility: 8, market_sentiment: 'Stable' },
         { id: 2, user_id: 1, name: 'Sports Running Shoes', sku: 'FW-010', category: 'footwear', unit_price: 2500, current_stock: 30, last_sold_date: '2026-01-15', price_volatility: 12, market_sentiment: 'Bullish' },
@@ -100,10 +101,18 @@ const query = async (text, params = []) => {
             product_id: params[0],
             type: params[1],
             quantity: params[2],
-            reason: params[3]
+            reason: params[3],
+            timestamp: new Date().toISOString()
         };
         mockData.transactions.push(tx);
         return { rows: [tx] };
+    }
+
+    // 5b. Get transactions by product (for sales history)
+    if (sql.includes('SELECT * FROM INVENTORY_TRANSACTIONS') && sql.includes('PRODUCT_ID')) {
+        const productId = params[0];
+        const rows = mockData.transactions.filter(t => t.product_id === productId);
+        return { rows };
     }
 
     // 6. Threshold Update
@@ -208,16 +217,50 @@ const query = async (text, params = []) => {
         return { rows: mockData.users };
     }
 
-    // 13. Create User (Mock)
+    // 13. Create User (Mock) — supports location and geo
     if (sql.startsWith('INSERT INTO USERS')) {
         const newUser = {
             id: mockData.users.length > 0 ? Math.max(...mockData.users.map(u => u.id)) + 1 : 1,
             name: params[0],
             email: params[1],
-            password: params[2]
+            password: params[2],
+            location: params[3] || null,
+            geo: params[4] || null
         };
         mockData.users.push(newUser);
         return { rows: [newUser] };
+    }
+
+    // 14. Outlets by user
+    if (sql.includes('SELECT * FROM OUTLETS')) {
+        const userId = params[0];
+        return { rows: mockData.outlets.filter(o => o.user_id === userId) };
+    }
+
+    // 15. Create Outlet
+    if (sql.startsWith('INSERT INTO OUTLETS')) {
+        const newOutlet = {
+            id: mockData.outlets.length > 0 ? Math.max(...mockData.outlets.map(o => o.id)) + 1 : 1,
+            user_id: params[0],
+            location: params[1],
+            geo_display_name: params[2] || null,
+            lat: params[3] != null ? parseFloat(params[3]) : null,
+            lon: params[4] != null ? parseFloat(params[4]) : null,
+            created_at: new Date().toISOString()
+        };
+        mockData.outlets.push(newOutlet);
+        return { rows: [newOutlet] };
+    }
+
+    // 16. Delete Outlet
+    if (sql.startsWith('DELETE FROM OUTLETS')) {
+        const id = parseInt(params[0]);
+        const index = mockData.outlets.findIndex(o => o.id === id);
+        if (index !== -1) {
+            mockData.outlets.splice(index, 1);
+            return { rowCount: 1, rows: [] };
+        }
+        return { rowCount: 0, rows: [] };
     }
 
     if (['BEGIN', 'COMMIT', 'ROLLBACK'].includes(sql)) {

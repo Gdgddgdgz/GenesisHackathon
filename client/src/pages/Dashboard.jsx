@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, TrendingUp, AlertTriangle, DollarSign, Activity, Zap, ShieldCheck, Globe } from 'lucide-react';
+import { Package, AlertTriangle, DollarSign, Activity, Zap, ShieldCheck, MapPin } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
@@ -12,14 +12,15 @@ const Dashboard = () => {
     const [products, setProducts] = useState([]);
     const [chartData, setChartData] = useState([]);
     const [festivalData, setFestivalData] = useState(null);
-    const [isBulkImporting, setIsBulkImporting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [deadStock, setDeadStock] = useState([]);
     const [isBannerVisible, setIsBannerVisible] = useState(true);
     const [replenishStatus, setReplenishStatus] = useState('IDLE');
     const [draftOrder, setDraftOrder] = useState(null);
 
-    const [selectedCategory, setSelectedCategory] = useState('');
+    const [outlets, setOutlets] = useState([]);
+    const [selectedLocationId, setSelectedLocationId] = useState('');
+    const [selectedLocation, setSelectedLocation] = useState(null); // { id, location, lat, lon }
     const [isInferenceLoading, setIsInferenceLoading] = useState(false);
 
     const handleAutoReplenish = async () => {
@@ -52,10 +53,15 @@ const Dashboard = () => {
         }
     };
 
-    const fetchInsights = async (category) => {
+    const fetchInsights = async (locationLat, locationLon) => {
         setIsInferenceLoading(true);
         try {
-            const res = await aiApi.get(`/forecast/seasonal?category=${encodeURIComponent(category)}`);
+            const params = new URLSearchParams();
+            if (locationLat != null && locationLon != null) {
+                params.set('lat', locationLat);
+                params.set('lon', locationLon);
+            }
+            const res = await aiApi.get(`/forecast/seasonal?${params.toString()}`);
             setFestivalData(res.data);
         } catch (err) {
             console.error("Inference Error:", err);
@@ -63,16 +69,53 @@ const Dashboard = () => {
         setIsInferenceLoading(false);
     };
 
+    const fetchForecast = async (productId, productStock, locationLat, locationLon, historicalSales) => {
+        try {
+            const params = new URLSearchParams();
+            if (locationLat != null && locationLon != null) {
+                params.set('lat', locationLat);
+                params.set('lon', locationLon);
+            }
+            let forecastRes;
+            if (historicalSales && historicalSales.length > 0) {
+                forecastRes = await aiApi.post(`/forecast/${productId}`, {
+                    lat: locationLat,
+                    lon: locationLon,
+                    historical_sales: historicalSales,
+                });
+            } else {
+                forecastRes = await aiApi.get(`/forecast/${productId}?${params.toString()}`);
+            }
+            let runningStock = productStock;
+            const forecast = forecastRes.data.forecast.map(day => {
+                const dataPoint = {
+                    name: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+                    stock: runningStock,
+                    demand: day.predicted_demand,
+                };
+                runningStock = Math.max(0, runningStock - day.predicted_demand + 15);
+                return dataPoint;
+            });
+            setChartData(forecast);
+        } catch (err) {
+            console.error("Forecast error:", err);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const inventoryRes = await api.get('/inventory/products');
+                const [inventoryRes, outletsRes] = await Promise.all([
+                    api.get('/inventory/products'),
+                    api.get('/outlets').catch(() => ({ data: [] })),
+                ]);
                 const productsData = inventoryRes.data;
+                const outletsData = outletsRes.data || [];
                 setProducts(productsData);
+                setOutlets(outletsData);
 
-                // Calculations
                 const totalProducts = productsData.length;
-                const lowStock = productsData.filter(p => p.current_stock < 50).length;
+                const lowStock = productsData.filter(p => p.current_stock < (p.min_level ?? 50)).length;
                 const deadStockItems = productsData.filter(p => {
                     if (!p.last_sold_date) return false;
                     const days = (new Date() - new Date(p.last_sold_date)) / (1000 * 60 * 60 * 24);
@@ -87,24 +130,19 @@ const Dashboard = () => {
                     { title: 'Projected Savings', value: '₹18.4K', icon: DollarSign, trend: 24 },
                 ]);
 
-                // Forecast logic
+                const firstOutlet = outletsData.find(o => o.lat != null && o.lon != null) || outletsData[0];
+                if (firstOutlet) {
+                    setSelectedLocationId(String(firstOutlet.id));
+                    setSelectedLocation({ id: firstOutlet.id, location: firstOutlet.location, lat: firstOutlet.lat, lon: firstOutlet.lon });
+                }
+
                 const targetProduct = productsData.length > 0 ? productsData[0] : { id: 1, current_stock: 100 };
-                const forecastRes = await aiApi.get(`/forecast/${targetProduct.id}`);
-                let runningStock = targetProduct.current_stock;
-
-                const forecast = forecastRes.data.forecast.map(day => {
-                    const dataPoint = {
-                        name: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-                        stock: runningStock,
-                        demand: day.predicted_demand,
-                    };
-                    runningStock = Math.max(0, runningStock - day.predicted_demand + 15);
-                    return dataPoint;
-                });
-                setChartData(forecast);
-
-                // Initial insights load
-                fetchInsights(selectedCategory);
+                const lat = firstOutlet?.lat ?? null;
+                const lon = firstOutlet?.lon ?? null;
+                const salesHistoryRes = await api.get(`/inventory/products/${targetProduct.id}/sales-history`).catch(() => null);
+                const historicalSales = salesHistoryRes?.data?.daily_demand;
+                await fetchForecast(targetProduct.id, targetProduct.current_stock, lat, lon, historicalSales);
+                fetchInsights(lat, lon);
                 setLoading(false);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
@@ -114,10 +152,19 @@ const Dashboard = () => {
         fetchData();
     }, []);
 
-    const handleCategoryChange = (e) => {
-        const cat = e.target.value;
-        setSelectedCategory(cat);
-        fetchInsights(cat);
+    const handleLocationChange = async (e) => {
+        const id = e.target.value;
+        setSelectedLocationId(id);
+        const outlet = outlets.find(o => String(o.id) === id);
+        const loc = outlet ? { id: outlet.id, location: outlet.location, lat: outlet.lat, lon: outlet.lon } : null;
+        setSelectedLocation(loc);
+        const lat = loc?.lat ?? null;
+        const lon = loc?.lon ?? null;
+        fetchInsights(lat, lon);
+        const targetProduct = products.length > 0 ? products[0] : { id: 1, current_stock: 100 };
+        const salesHistoryRes = await api.get(`/inventory/products/${targetProduct.id}/sales-history`).catch(() => null);
+        const historicalSales = salesHistoryRes?.data?.daily_demand;
+        await fetchForecast(targetProduct.id, targetProduct.current_stock, lat, lon, historicalSales);
     };
 
     if (loading) return (
@@ -151,34 +198,32 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Category Intelligence Selector Area */}
+            {/* Location selector for forecast context */}
             <div className="flex items-center gap-6 py-2 border-y border-white/5">
                 <div className="flex-1 flex items-center gap-4">
                     <div className="p-2 bg-blue-500/10 rounded-lg">
-                        <Globe className="text-blue-500" size={18} />
+                        <MapPin className="text-blue-500" size={18} />
                     </div>
                     <div>
-                        <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Market Intelligence Category</label>
+                        <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Forecast Location</label>
                         <select
-                            value={selectedCategory}
-                            onChange={handleCategoryChange}
+                            value={selectedLocationId}
+                            onChange={handleLocationChange}
                             className="bg-transparent text-sm font-bold text-white focus:outline-none border-none p-0 cursor-pointer hover:text-blue-400 transition-colors appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_center] bg-[length:1.2em] bg-no-repeat"
                         >
-                            <option value="" className="bg-[#0B1121]" disabled>Select what you sell</option>
-                            <option value="Flowers" className="bg-[#0B1121]">Flowers</option>
-                            <option value="Food & Drinks" className="bg-[#0B1121]">Food & Drinks</option>
-                            <option value="Clothes & Apparel" className="bg-[#0B1121]">Clothes & Apparel</option>
-                            <option value="Stationery & Education" className="bg-[#0B1121]">Stationery & Education</option>
-                            <option value="Electronics" className="bg-[#0B1121]">Electronics</option>
-                            <option value="Home Essentials" className="bg-[#0B1121]">Home Essentials</option>
-                            <option value="Healthcare & Wellness" className="bg-[#0B1121]">Healthcare & Wellness</option>
+                            <option value="" className="bg-[#0B1121]">Select location</option>
+                            {outlets.map((o) => (
+                                <option key={o.id} value={String(o.id)} className="bg-[#0B1121]">
+                                    {o.location || o.geo_display_name || `Outlet ${o.id}`}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
                 <div className="hidden md:flex items-center gap-6 px-6 border-l border-white/5">
                     <div className="text-right">
                         <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Reasoning Engine</p>
-                        <p className="text-xs font-black text-blue-400 uppercase italic">Meta Llama-3-8B</p>
+                        <p className="text-xs font-black text-blue-400 uppercase italic">Amazon Chronos-2</p>
                     </div>
                     {isInferenceLoading && (
                         <div className="flex items-center gap-2">
@@ -331,75 +376,78 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Strategic Insights Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnimatePresence mode="wait">
-                    {isInferenceLoading ? (
-                        [1, 2, 3].map((i) => (
-                            <motion.div
-                                key={`shimmer-${i}`}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="glass-card p-6 border-l-4 border-l-slate-700 h-48 flex flex-col justify-between"
-                            >
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <div className="h-4 w-20 bg-slate-800 rounded animate-pulse"></div>
-                                        <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
+            {/* Strategic Insights Grid — matches Audit Trail / Outlets glass-card style */}
+            <div className="space-y-4">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] ml-1">Strategic Insights</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <AnimatePresence mode="wait">
+                        {isInferenceLoading ? (
+                            [1, 2, 3].map((i) => (
+                                <motion.div
+                                    key={`shimmer-${i}`}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="glass-card overflow-hidden rounded-xl border border-[var(--border-glass)] p-6 h-48 flex flex-col justify-between"
+                                >
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="h-4 w-20 bg-[var(--bg-main)] rounded animate-pulse"></div>
+                                            <div className="h-4 w-12 bg-[var(--bg-main)] rounded animate-pulse"></div>
+                                        </div>
+                                        <div className="h-6 w-3/4 bg-[var(--bg-main)] rounded animate-pulse"></div>
+                                        <div className="h-12 w-full bg-[var(--bg-main)] rounded animate-pulse mt-2"></div>
                                     </div>
-                                    <div className="h-6 w-3/4 bg-slate-800 rounded animate-pulse"></div>
-                                    <div className="h-12 w-full bg-slate-800 rounded animate-pulse mt-2"></div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
-                                    <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
-                                </div>
-                            </motion.div>
-                        ))
-                    ) : (
-                        festivalData && festivalData.slice(0, 3).map((insight, idx) => (
-                            <motion.div
-                                key={idx}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                whileHover={{ y: -5 }}
-                                className="glass-card p-6 border-l-4 border-l-blue-500"
-                            >
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-[10px] font-black uppercase tracking-tighter">{insight.type || 'Market Driver'}</span>
-                                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest pl-0.5">{selectedCategory} Cluster</span>
+                                    <div className="flex gap-2">
+                                        <div className="h-4 w-12 bg-[var(--bg-main)] rounded animate-pulse"></div>
+                                        <div className="h-4 w-12 bg-[var(--bg-main)] rounded animate-pulse"></div>
                                     </div>
-                                </div>
-                                <h4 className="text-lg font-black text-[var(--text-primary)] mb-2 italic">"{insight.event}"</h4>
-                                <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {insight.categories.map((cat, ci) => (
-                                        <span key={ci} className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded uppercase">{cat}</span>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        ))
-                    )}
-                </AnimatePresence>
+                                </motion.div>
+                            ))
+                        ) : (
+                            festivalData && festivalData.slice(0, 3).map((insight, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    whileHover={{ y: -4 }}
+                                    className="glass-card overflow-hidden rounded-xl border border-[var(--border-glass)] p-6 border-l-4 border-l-blue-500 hover:border-blue-500/30 transition-colors"
+                                >
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-500/20">{insight.type || 'Market Driver'}</span>
+                                            <span className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">{selectedLocation?.location || 'All locations'} Cluster</span>
+                                        </div>
+                                    </div>
+                                    <h4 className="text-base font-black text-[var(--text-primary)] mb-2 italic leading-snug">"{insight.event}"</h4>
+                                    <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed mb-4">{insight.insight}</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {insight.categories.map((cat, ci) => (
+                                            <span key={ci} className="text-[10px] font-bold text-[var(--text-secondary)] bg-[var(--bg-main)] px-2 py-1 rounded-lg uppercase border border-[var(--border-glass)]">{cat}</span>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            ))
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
 
-            {/* Telemetry Feed */}
-            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-glass)] p-6 font-mono text-xs shadow-xl">
-                <div className="flex items-center gap-2 mb-4 text-emerald-400">
+            {/* Telemetry Feed — matches rest of UI */}
+            <div className="glass-card overflow-hidden rounded-xl border border-[var(--border-glass)] p-6">
+                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[var(--border-glass)]">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
-                    <span className="font-bold underline uppercase">Live Telemetry Stream</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Live Telemetry Stream</span>
                 </div>
-                <div className="space-y-2 opacity-70">
-                    <p className="text-slate-500">[{new Date().toLocaleTimeString()}] <span className="text-blue-400 font-bold uppercase ml-2">[NETWORK]</span> Uplink established. SME-Alpha synchronization active.</p>
+                <div className="space-y-2 font-mono text-xs">
+                    <p className="text-[var(--text-secondary)]">[{new Date().toLocaleTimeString()}] <span className="text-blue-400 font-bold uppercase ml-2">[NETWORK]</span> Uplink established. SME-Alpha synchronization active.</p>
                     {products.some(p => p.current_stock < p.min_level) && (
-                        <p className="text-red-400 font-black italic">[{new Date().toLocaleTimeString()}] [CRITICAL] Stockout hazard detected in primary cluster.</p>
+                        <p className="text-red-400 font-black">[{new Date().toLocaleTimeString()}] <span className="uppercase">[CRITICAL]</span> Stockout hazard detected in primary cluster.</p>
                     )}
-                    {festivalData && (
-                        <p className="text-amber-400 font-bold uppercase ml-2">[{new Date().toLocaleTimeString()}] [NEURAL] Strategic pattern match: {festivalData[0].event} imminent.</p>
+                    {festivalData && festivalData[0] && (
+                        <p className="text-amber-400 font-bold">[{new Date().toLocaleTimeString()}] <span className="uppercase">[NEURAL]</span> Strategic pattern match: {festivalData[0]?.event} imminent.</p>
                     )}
-                    <p className="text-slate-500">[{new Date().toLocaleTimeString()}] <span className="text-emerald-400 font-bold uppercase ml-2">[LEDGER]</span> Audit hash #442a-x9 generated successfully.</p>
+                    <p className="text-[var(--text-secondary)]">[{new Date().toLocaleTimeString()}] <span className="text-emerald-400 font-bold uppercase ml-2">[LEDGER]</span> Audit hash #442a-x9 generated successfully.</p>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, Map, Users, Settings, FileText, Globe, ShoppingCart, LogOut, User, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Package, Map, Users, FileText, MapPin, ShoppingCart, LogOut, User, Sun, Moon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -15,10 +15,10 @@ const Sidebar = () => {
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
         { icon: Package, label: 'Inventory', path: '/inventory' },
         { icon: Map, label: 'Demand Map', path: '/map' },
-        { icon: Globe, label: 'Location Intel', path: '/map-intel' },
         { icon: ShoppingCart, label: 'Billing Counter', path: '/billing' },
         { icon: Users, label: 'Vendors', path: '/vendors' },
         { icon: FileText, label: 'Audit Trail', path: '/audit' },
+        { icon: MapPin, label: 'Outlet Locations', path: '/outlets' },
     ];
 
     const handleLogout = () => {

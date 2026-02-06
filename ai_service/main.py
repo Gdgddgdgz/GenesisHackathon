@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query  # Query used for optional heatmap lat/lon
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import random
@@ -9,7 +9,6 @@ import logging
 import os
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
-from chronos import ChronosPipeline
 import torch
 from forecast_interpreter import interpret_forecast
 
@@ -17,13 +16,27 @@ from forecast_interpreter import interpret_forecast
 load_dotenv()
 HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
 
-# Initialize Hugging Face Models
-client = InferenceClient(token=HF_TOKEN)
-chronos_pipeline = ChronosPipeline.from_pretrained(
-    "amazon/chronos-t5-tiny",
-    device_map="cpu", # Force CPU for local dev compatibility
-    torch_dtype=torch.float32,
-)
+# Initialize Hugging Face Models (for seasonal text insights only)
+client = InferenceClient(token=HF_TOKEN) if os.getenv("HUGGINGFACE_TOKEN") else None
+
+# Amazon Chronos-2 for time-series predictions (replaces Meta Llama for forecasting)
+try:
+    from chronos import ChronosPipeline
+    chronos_pipeline = ChronosPipeline.from_pretrained(
+        "amazon/chronos-2",
+        device_map="cpu",
+        torch_dtype=torch.float32,
+    )
+    CHRONOS_MODEL = "amazon/chronos-2"
+except Exception as e:
+    print(f"Chronos-2 load failed ({e}), falling back to chronos-t5-tiny")
+    from chronos import ChronosPipeline
+    chronos_pipeline = ChronosPipeline.from_pretrained(
+        "amazon/chronos-t5-tiny",
+        device_map="cpu",
+        torch_dtype=torch.float32,
+    )
+    CHRONOS_MODEL = "amazon/chronos-t5-tiny"
 
 app = FastAPI()
 
@@ -221,10 +234,14 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     return math.sqrt(((lat1-lat2)*111)**2 + ((lon1-lon2)*85)**2)
 
 @app.get("/heatmap")
-def get_heatmap(segment: str = "apparel"):
+def get_heatmap(segment: str = "apparel", lat: float = Query(None), lon: float = Query(None)):
     features = []
-    shop_lat = SHOP_LOCATION["lat"]
-    shop_lon = SHOP_LOCATION["lon"]
+    if lat is not None and lon is not None:
+        shop_location = {"lat": lat, "lon": lon}
+    else:
+        shop_location = SHOP_LOCATION
+    shop_lat = shop_location["lat"]
+    shop_lon = shop_location["lon"]
     
     # Normalize segment input (e.g., matching frontend options)
     segment_key = segment.lower().replace(" ", "_").replace("&", "").replace("/", "_").replace("__", "_")
@@ -273,7 +290,7 @@ def get_heatmap(segment: str = "apparel"):
     return {
         "type": "FeatureCollection",
         "features": features,
-        "shop_location": SHOP_LOCATION
+        "shop_location": shop_location
     }
 
 # --- Absolute Semantic Whitelist (Zero Leakage Enforcement) ---
@@ -376,9 +393,10 @@ def get_market_context(category):
     return "\n    ".join(signals)
 
 @app.get("/forecast/seasonal")
-def get_seasonal_outlook(category: str = "General"):
-    """Returns a dynamic, category-locked strategic outlook using Hugging Face Llama-3."""
-    
+def get_seasonal_outlook(category: str = Query("General"), lat: float = Query(None), lon: float = Query(None)):
+    """Returns a dynamic, location-aware strategic outlook (location + events)."""
+    if not category or category == "General":
+        category = "General"
     # Normalize truncated categories
     if category == "Food": category = "Food & Drinks"
     if category == "Clothes": category = "Clothes & Apparel"
@@ -593,72 +611,122 @@ def get_festival_forecast():
         "reason": "AI engine analyzing live cultural telemetry."
     }
 
+def _nearest_zone(lat: float, lon: float):
+    """Find nearest MICRO_ZONE to (lat, lon)."""
+    if lat is None or lon is None:
+        return random.choice(MICRO_ZONES)
+    best = None
+    best_d = float("inf")
+    for z in MICRO_ZONES:
+        d = calculate_distance(lat, lon, z["center"]["lat"], z["center"]["lon"])
+        if d < best_d:
+            best_d = d
+            best = z
+    return best or MICRO_ZONES[0]
+
+
+def _event_multiplier(now, forecast_dates_str):
+    """Return a multiplier for upcoming events in the next 7 days (slight demand bump)."""
+    FESTIVAL_DATES = {
+        "2026-02-14": 1.15,
+        "2026-02-15": 1.2,
+        "2026-02-18": 1.1,
+        "2026-03-04": 1.25,
+    }
+    mult = 1.0
+    for i in range(7):
+        d = now + timedelta(days=i + 1)
+        key = d.strftime("%Y-%m-%d")
+        if key in FESTIVAL_DATES:
+            mult = max(mult, FESTIVAL_DATES[key])
+    return mult
+
+
 @app.get("/forecast/{product_id}")
-def get_forecast(product_id: int):
-    """Predicts demand using Amazon Chronos and generates insights via Llama-3."""
+def get_forecast(product_id: int, lat: float = Query(None), lon: float = Query(None)):
+    """Predicts demand using Chronos-2; uses location and upcoming events/seasons."""
+    return _run_forecast(product_id, lat=lat, lon=lon, historical_sales=None)
+
+
+class ForecastBody(BaseModel):
+    lat: float | None = None
+    lon: float | None = None
+    historical_sales: list | None = None
+
+
+@app.post("/forecast/{product_id}")
+def post_forecast(product_id: int, body: ForecastBody = None):
+    """Forecast with optional past sales and location; factors in events/seasons."""
+    body = body or ForecastBody()
+    return _run_forecast(
+        product_id,
+        lat=body.lat,
+        lon=body.lon,
+        historical_sales=body.historical_sales,
+    )
+
+
+def _run_forecast(product_id: int, lat: float = None, lon: float = None, historical_sales: list = None):
+    """Shared logic: past sales + location + events/seasons."""
     now = datetime.now()
-    
-    # 1. Generate Historical Simulation (Last 30 days)
-    # In a real app, this would come from a DB
-    historical_data = torch.tensor([
-        random.randint(40, 100) + (15 if (now - timedelta(days=x)).weekday() >= 5 else 0) 
-        for x in range(30, 0, -1)
-    ], dtype=torch.float32)
-    
-    # 2. Chronos Numeric Forecasting (Next 7 days)
-    context = historical_data
+
+    # 1. Historical: use past sales if provided, else simulate
+    if historical_sales and len(historical_sales) >= 14:
+        arr = [float(x) for x in historical_sales[-30:]]
+        if len(arr) < 30:
+            pad = [arr[0] if arr else 50.0] * (30 - len(arr))
+            arr = pad + arr
+        historical_data = torch.tensor([arr], dtype=torch.float32)
+    else:
+        historical_data = torch.tensor(
+            [random.randint(40, 100) + (15 if (now - timedelta(days=x)).weekday() >= 5 else 0) for x in range(30, 0, -1)],
+            dtype=torch.float32,
+        ).unsqueeze(0)
+
+    # 2. Chronos forecast (next 7 days)
     prediction_length = 7
-    forecast = chronos_pipeline.predict(context, prediction_length) # [num_series, prediction_length, num_samples]
-    
-    # Extract median and bounds
+    forecast = chronos_pipeline.predict(historical_data, prediction_length)
     forecast_median = forecast[0].median(dim=0).values.tolist()
     forecast_lower = forecast[0].quantile(0.1, dim=0).tolist()
     forecast_upper = forecast[0].quantile(0.9, dim=0).tolist()
-    
-    dates = [(now + timedelta(days=i+1)).strftime('%Y-%m-%d') for i in range(prediction_length)]
-    
-    formatted_forecast = []
-    for i in range(7):
-        formatted_forecast.append({
+
+    # 3. Location + events: nearest zone and seasonal multiplier
+    zone_context = _nearest_zone(lat, lon)
+    event_mult = _event_multiplier(now, None)
+    market_signals = get_market_context("General")
+
+    forecast_median = [x * event_mult for x in forecast_median]
+    forecast_lower = [x * event_mult for x in forecast_lower]
+    forecast_upper = [x * event_mult for x in forecast_upper]
+
+    dates = [(now + timedelta(days=i + 1)).strftime("%Y-%m-%d") for i in range(prediction_length)]
+    formatted_forecast = [
+        {
             "date": dates[i],
             "predicted_demand": round(forecast_median[i], 2),
             "lower_bound": round(forecast_lower[i], 2),
-            "upper_bound": round(forecast_upper[i], 2)
-        })
+            "upper_bound": round(forecast_upper[i], 2),
+        }
+        for i in range(7)
+    ]
 
-    # 3. Llama-3 Contextual Insight
-    # Extract sector context based on region profiles (e.g., BKC Business Hub)
-    # For demo, we'll pick a typical SME profile
-    zone_context = random.choice(MICRO_ZONES)
-    
-    insight_prompt = f"""
-    [SUPPLY CHAIN INTELLIGENCE]
-    CONTEXT: SME store in {zone_context['name']} ({zone_context['profile']} zone).
-    FORECAST: Next 7 days median demand: {sum(forecast_median)/7:.2f} units/day.
-    
-    TASK: Provide a 2-sentence tactical supply chain recommendation for this SME. 
-    Focus on inventory optimization or specific risk mitigation.
-    """
-    
-    try:
-        chat_res = client.chat_completion(
-            model="meta-llama/Meta-Llama-3-8B-Instruct",
-            messages=[{"role": "user", "content": insight_prompt}],
-            max_tokens=150,
-            temperature=0.4
-        )
-        ai_insight = chat_res.choices[0].message.content.strip()
-    except Exception:
-        ai_insight = f"Neural engine suggests maintaining buffer stock of {max(forecast_upper):.0f} units for {zone_context['profile']} fluctuations."
+    avg_demand = sum(forecast_median) / 7
+    peak_day = max(forecast_median)
+    buffer = max(forecast_upper)
+    ai_insight = (
+        f"Chronos-2 forecast (location: {zone_context['name']}, events applied): "
+        f"avg {avg_demand:.1f} units/day, peak ~{peak_day:.0f}. "
+        f"Buffer {buffer:.0f} units. Upcoming events/seasons factored in."
+    )
 
     return {
         "product_id": product_id,
-        "model": "Chronos-T5-Tiny + Llama-3-8B",
+        "model": CHRONOS_MODEL,
         "forecast": formatted_forecast,
         "ai_insight": ai_insight,
-        "context": f"Localized intelligence for {zone_context['name']} ({zone_context['profile']})",
+        "context": f"{zone_context['name']} ({zone_context['profile']}) | {market_signals[:80]}...",
         "status": "Success",
-        "timestamp": now.isoformat()
+        "timestamp": now.isoformat(),
     }
 
 @app.get("/regions")

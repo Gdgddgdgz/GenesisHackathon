@@ -36,21 +36,21 @@ const MapClickHandler = ({ onMapClick }) => {
     return null;
 };
 
-const MapAutoCenter = ({ activePointer }) => {
+const MapAutoCenter = ({ activePointer, shopLocation }) => {
     const map = useMap();
     React.useEffect(() => {
         if (activePointer) {
-            map.flyTo([activePointer.lat, activePointer.lng], 14, {
-                duration: 1.5
-            });
+            map.flyTo([activePointer.lat, activePointer.lng], 14, { duration: 1.5 });
+        } else if (shopLocation) {
+            map.flyTo([shopLocation.lat, shopLocation.lon], 13, { duration: 1 });
         }
-    }, [activePointer, map]);
+    }, [activePointer, shopLocation, map]);
     return null;
 };
 
 // --- 2. MAIN COMPONENT ---
 
-const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, institutions, colorMapping }) => {
+const LeafletMap = ({ points, shopLocation, userPins = [], onMapClick, activePointer, institutions, colorMapping }) => {
     const defaultCenter = [19.0760, 72.8777]; // Mumbai
     const center = shopLocation ? [shopLocation.lat, shopLocation.lon] : defaultCenter;
 
@@ -69,9 +69,21 @@ const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, instituti
 
             <MapClickHandler onMapClick={onMapClick} />
 
-            <MapAutoCenter activePointer={activePointer} />
+            <MapAutoCenter activePointer={activePointer} shopLocation={shopLocation} />
 
-            {/* A. User's Search Center (The Scan Area) */}
+            {/* User outlet + custom pins (always visible) */}
+            {userPins.map((pin, idx) => (
+                <Marker key={pin.id || `pin-${idx}`} position={[pin.lat, pin.lon]}>
+                    <Popup>
+                        <span className="text-xs font-bold text-slate-700">{pin.name || 'Your location'}</span>
+                    </Popup>
+                    <Tooltip direction="top" offset={[0, -5]} opacity={1} sticky>
+                        <span className="text-xs font-bold text-blue-600">{pin.name || 'Your location'}</span>
+                    </Tooltip>
+                </Marker>
+            ))}
+
+            {/* A. Active click / scan center (circle) */}
             {activePointer && (
                 <>
                     <Marker position={[activePointer.lat, activePointer.lng]} />
@@ -136,13 +148,15 @@ const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, instituti
 
             {/* C. Demand Heatmap Circles (Semantic Zone Analysis) */}
             {points.map((point, idx) => {
-                if (!point.geometry?.coordinates || !activePointer) return null;
+                if (!point.geometry?.coordinates) return null;
                 const coords = [point.geometry.coordinates[1], point.geometry.coordinates[0]];
+                const refPoint = activePointer || shopLocation;
+                if (!refPoint) return null;
 
-                // Radius Clipping
+                // Radius Clipping (relative to active pin or shop location)
                 const distKm = Math.sqrt(
-                    Math.pow((coords[0] - activePointer.lat) * 111, 2) +
-                    Math.pow((coords[1] - activePointer.lng) * 85, 2)
+                    Math.pow((coords[0] - refPoint.lat) * 111, 2) +
+                    Math.pow((coords[1] - refPoint.lon) * 85, 2)
                 );
                 if (distKm > 5) return null;
 

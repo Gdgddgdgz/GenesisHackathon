@@ -40,6 +40,7 @@ const inventoryRoutes = require('./routes/inventory');
 const vendorRoutes = require('./routes/vendors');
 const billingRoutes = require('./routes/billing');
 const intelRoutes = require('./routes/intel');
+const outletsRoutes = require('./routes/outlets');
 const { protect } = require('./middleware/auth');
 
 app.use('/api/auth', authRoutes);
@@ -47,6 +48,7 @@ app.use('/api/inventory', protect, inventoryRoutes);
 app.use('/api/vendors', protect, vendorRoutes);
 app.use('/api/billing', protect, billingRoutes);
 app.use('/api/intel', protect, intelRoutes);
+app.use('/api/outlets', protect, outletsRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
