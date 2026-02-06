@@ -260,7 +260,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="h-[350px]">
+                    <div style={{ width: '100%', height: 350 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
                                 <defs>
