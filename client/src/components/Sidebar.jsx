@@ -35,7 +35,7 @@ const Sidebar = () => {
                     className="w-10 h-10 object-contain rounded-xl shadow-lg shadow-blue-600/10 brightness-110"
                 />
                 <div>
-                    <h1 className="text-xl font-extrabold tracking-tight">SME Synth</h1>
+                    <h1 className="text-xl font-extrabold tracking-tight">Restockery</h1>
                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Genesis Hackathon</span>
                 </div>
             </div>

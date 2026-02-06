@@ -37,7 +37,7 @@ const GeospatialMap = () => {
     const handleMapClick = async (lat, lng) => {
         setActivePointer({ lat, lng });
         setIsScanning(true);
-        
+
         // Querying public OpenStreetMap data for institutions within 2km
         const query = `[out:json][timeout:25];
         (
@@ -46,7 +46,7 @@ const GeospatialMap = () => {
         rel["amenity"](around:5000,${lat},${lng});
         );
         out center;`;
-        
+
         try {
             const res = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
             setInstitutions(res.data.elements || []);
@@ -77,7 +77,7 @@ const GeospatialMap = () => {
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight flex items-center gap-3">
-                        Geospatial <span className="text-blue-500">Synth</span>
+                        Geospatial <span className="text-blue-500">Intel</span>
                         <Radar className="text-blue-500 animate-pulse" size={32} />
                     </h1>
                     <p className="text-[var(--text-secondary)] font-medium mt-1">Real-time demand and institutional clusters</p>
@@ -102,9 +102,9 @@ const GeospatialMap = () => {
                     )}
 
                     <div className="w-full h-full rounded-xl overflow-hidden ">
-                        <LeafletMap 
-                            points={points} 
-                            shopLocation={shopLocation} 
+                        <LeafletMap
+                            points={points}
+                            shopLocation={shopLocation}
                             onMapClick={handleMapClick}
                             activePointer={activePointer}
                             institutions={institutions}

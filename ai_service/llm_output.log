@@ -1,44 +1,44 @@
 [
-  {
-    "event": "Festive Wear Demand Surge",
-    "type": "Clothing & Apparel",
-    "surge": "+80%",
-    "categories": ["Traditional ethnic wear", "Kurtas", "Saris"],
-    "insight": "Customers are looking for traditional wear for Maha Shivaratri and Valentine's Day celebrations; stock up on vibrant colors and festive designs."
-  },
-  {
-    "event": "Exam Prep Supplies Rush",
-    "type": "Stationery & Education Supplies",
-    "surge": "+120%",
-    "categories": ["Notebooks", "Stationsery kits", "Reference books"],
-    "insight": "**Due to Board Exams**, students are stocking up on essential supplies; ensure timely delivery and wide selection to avoid stockouts."
-  },
-  {
-    "event": "Seasonal Sweets Refresh",
-    "type": "Sweets & Bakery",
-    "surge": "+40%",
-    "categories": ["Fresh fruit cakes", "Coffee and tea-infused sweets", "Spring-themed baked goods"],
-    "insight": "As spring weather transitions, customers are looking for refreshing sweets and baked goods; emphasize new seasonal flavors and ingredients."
-  },
-  {
-    "event": "Gift-Giving Rush",
-    "type": "Gifts & Accessories",
-    "surge": "+50%",
-    "categories": ["Personalized gifts", "Greeting cards", "Chocolates"],
-    "insight": "Valentine's Day is driving demand for romantic gifts; highlight premium options and thoughtful gestures for special occasions."
-  },
-  {
-    "event": "Home Refresh Cycle",
-    "type": "Home & Lifestyle",
-    "surge": "+30%",
-    "categories": ["Lightweight curtains", "Summer-themed home decor", "Fresh bedroom linens"],
-    "insight": "As temperatures rise, customers are looking to refresh their homes; focus on airier fabrics and breathable materials for a cooler indoor climate."
-  },
-  {
-    "event": "Seasonal Beverages Boom",
-    "type": "Food & Beverages",
-    "surge": "+60%",
-    "categories": ["Fresh juices", "Iced tea flavors", "Summer-inspired sauces"],
-    "insight": "Spring weather is driving demand for refreshing beverages; emphasize seasonal flavors and innovative product lines to capture market share."
-  }
+    {
+        "event": "Festive Wear Demand Cycle",
+        "type": "Clothing & Apparel",
+        "surge": "+80%",
+        "categories": ["Traditional Sarees", "Kurta Pyjamas"],
+        "insight": "As Maha Shivaratri approaches, traditional wear enthusiasts are stocking up on premium outfits. We anticipate a surge in sales for festive wear **due to Maha Shivaratri**."
+    },
+    {
+        "event": "Spring Season Refresh",
+        "type": "Home & Lifestyle",
+        "surge": "+40%",
+        "categories": ["Lightweight Bedding", "Spring-themed Home Decor"],
+        "insight": "With the spring weather transition, customers are looking to refresh their homes with seasonal essentials. Expect a moderate increase in sales for spring-themed home decor and bedding."
+    },
+    {
+        "event": "Valentine's Day Gift Surge",
+        "type": "Gifts & Accessories",
+        "surge": "+150%",
+        "categories": ["Floral Arrangements", "Chocolates"],
+        "insight": "Love is in the air, and Valentine's Day is just around the corner. We anticipate a high-impact surge in sales for romantic gifts, including premium chocolates and floral arrangements."
+    },
+    {
+        "event": "Education Supplies Rush",
+        "type": "Stationery & Education Supplies",
+        "surge": "+50%",
+        "categories": ["Notebooks", "Pens & Pencils"],
+        "insight": "As Board Exams approach, students are scrambling to stock up on essential stationery and education supplies. We anticipate a moderate increase in sales for exam-related essentials **due to Board Exams**."
+    },
+    {
+        "event": "Celebratory Sweets Demand",
+        "type": "Sweets & Bakery",
+        "surge": "+60%",
+        "categories": ["Traditional Sweets", "Fruit Cakes"],
+        "insight": "With Valentine's Day and Maha Shivaratri just around the corner, celebrations are in full swing. Expect a surge in sales for traditional sweets and festive desserts."
+    },
+    {
+        "event": "Summer Outfit Demand",
+        "type": "Clothing & Apparel",
+        "surge": "+30%",
+        "categories": ["Lightweight Fabrics", "Shorts & T-shirts"],
+        "insight": "As temperatures climb, customer interest in summer outfits is rising. We anticipate a moderate increase in sales for lightweight fabrics and casual wear essentials."
+    }
 ]

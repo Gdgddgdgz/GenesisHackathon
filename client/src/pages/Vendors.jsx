@@ -57,7 +57,7 @@ const Vendors = () => {
     };
 
     const handleDraftOrder = (vendor) => {
-        const msg = `Namaste ${vendor.name}, need a restock based on SME Synth predictions. Can we match last pricing?`;
+        const msg = `Namaste ${vendor.name}, need a restock based on Restockery predictions. Can we match last pricing?`;
         const url = `https://wa.me/${vendor.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
     };

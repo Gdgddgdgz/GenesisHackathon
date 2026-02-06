@@ -55,7 +55,7 @@ const Dashboard = () => {
     const fetchInsights = async (category) => {
         setIsInferenceLoading(true);
         try {
-            const res = await aiApi.get(`/forecast/seasonal?category=${category}`);
+            const res = await aiApi.get(`/forecast/seasonal?category=${encodeURIComponent(category)}`);
             setFestivalData(res.data);
         } catch (err) {
             console.error("Inference Error:", err);
