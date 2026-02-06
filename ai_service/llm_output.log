@@ -1,44 +1,44 @@
 [
-    {
-        "event": "Dyeing Demand Surges",
-        "type": "Clothing & Apparel",
-        "surge": "+120%",
-        "categories": ["Dyed fabrics", "Henna-based products"],
-        "insight": "As Maha Shivaratri draws near, demand for dyeing services and henna-based products is anticipated to surge, as devotees seek to adorn themselves with vibrant colors and patterns."
-    },
-    {
-        "event": "Savory Snack Shift",
-        "type": "Food & Beverages",
-        "surge": "+65%",
-        "categories": ["Savory namkeen", "Spiced snacks"],
-        "insight": "With the approaching Board Exams, students and their families are likely to opt for savory snacks over sweet treats to fuel study sessions and exam prep."
-    },
-    {
-        "event": "Spring Refresh",
-        "type": "Home & Lifestyle",
-        "surge": "+35%",
-        "categories": ["Umbrellas", "Raincoats"],
-        "insight": "As the weather transitions to spring, customers are expected to look for seasonal refreshments, such as rain gear and outdoor accessories, to prepare for the changing conditions."
-    },
-    {
-        "event": "Romantic Gifting Cycle",
-        "type": "Gifts & Accessories",
-        "surge": "+90%",
-        "categories": ["Chocolates", "Flowers"],
-        "insight": "Valentine's Day is just around the corner, prompting customers to seek out romantic gifts and accessories, including chocolates and flowers, to express their love and affection."
-    },
-    {
-        "event": "Stationery Supplies Rush",
-        "type": "Stationery & Education Supplies",
-        "surge": "+55%",
-        "categories": ["Notebooks", "Pens"],
-        "insight": "With the Board Exams looming, students and their families are expected to stock up on essential stationery supplies, such as notebooks and pens, to ensure they are well-prepared for the exams."
-    },
-    {
-        "event": "Celebratory Baking",
-        "type": "Sweets & Bakery",
-        "surge": "+145%",
-        "categories": ["Custom cakes", "Sweet pastries"],
-        "insight": "As Maha Shivaratri approaches, the demand for custom cakes and sweet pastries is anticipated to surge, as devotees and families look to indulge in festive treats and celebrate the occasion."
-    }
+  {
+    "event": "Festive Wear Demand Surge",
+    "type": "Clothing & Apparel",
+    "surge": "+80%",
+    "categories": ["Traditional ethnic wear", "Kurtas", "Saris"],
+    "insight": "Customers are looking for traditional wear for Maha Shivaratri and Valentine's Day celebrations; stock up on vibrant colors and festive designs."
+  },
+  {
+    "event": "Exam Prep Supplies Rush",
+    "type": "Stationery & Education Supplies",
+    "surge": "+120%",
+    "categories": ["Notebooks", "Stationsery kits", "Reference books"],
+    "insight": "**Due to Board Exams**, students are stocking up on essential supplies; ensure timely delivery and wide selection to avoid stockouts."
+  },
+  {
+    "event": "Seasonal Sweets Refresh",
+    "type": "Sweets & Bakery",
+    "surge": "+40%",
+    "categories": ["Fresh fruit cakes", "Coffee and tea-infused sweets", "Spring-themed baked goods"],
+    "insight": "As spring weather transitions, customers are looking for refreshing sweets and baked goods; emphasize new seasonal flavors and ingredients."
+  },
+  {
+    "event": "Gift-Giving Rush",
+    "type": "Gifts & Accessories",
+    "surge": "+50%",
+    "categories": ["Personalized gifts", "Greeting cards", "Chocolates"],
+    "insight": "Valentine's Day is driving demand for romantic gifts; highlight premium options and thoughtful gestures for special occasions."
+  },
+  {
+    "event": "Home Refresh Cycle",
+    "type": "Home & Lifestyle",
+    "surge": "+30%",
+    "categories": ["Lightweight curtains", "Summer-themed home decor", "Fresh bedroom linens"],
+    "insight": "As temperatures rise, customers are looking to refresh their homes; focus on airier fabrics and breathable materials for a cooler indoor climate."
+  },
+  {
+    "event": "Seasonal Beverages Boom",
+    "type": "Food & Beverages",
+    "surge": "+60%",
+    "categories": ["Fresh juices", "Iced tea flavors", "Summer-inspired sauces"],
+    "insight": "Spring weather is driving demand for refreshing beverages; emphasize seasonal flavors and innovative product lines to capture market share."
+  }
 ]
