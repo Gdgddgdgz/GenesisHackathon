@@ -1,44 +1,44 @@
 [
   {
-    "event": "Festive Wear Sales Peak",
-    "type": "Clothing & Apparel",
+    "event": "Festive Gifting Window",
+    "type": "Gifts & Accessories",
     "surge": "+80%",
-    "categories": ["Lehengas", "Sarees"],
-    "insight": "Customers are purchasing traditional and ethnic wear in anticipation of the upcoming Maha Shivaratri celebrations, showcasing an increase in sales for festive wear due to the praying and worship attire preferences."
+    "categories": ["Ornaments", "Valentine's Day Cards"],
+    "insight": "Gift-giving has become a norm on Valentine's Day, resulting in a surge of demand for ornaments, cards, and other thematic accessories."
   },
   {
-    "event": "Sweet Treat Demand Boost",
-    "type": "Sweets & Bakery",
-    "surge": "+120%",
-    "categories": ["Gujarati Sweets", "North Indian Sweets"],
-    "insight": "The demand for traditional sweets and bakery items is soaring **due to Maha Shivaratri**, as families prefer authentic regional treats for their households and gifting purposes, triggering a significant increase in sales for premium sweets."
+    "event": "Seasonal Refresh",
+    "type": "Home & Lifestyle",
+    "surge": "+40%",
+    "categories": ["Lightweight Bedding", "Air Conditioners"],
+    "insight": "As temperatures rise, customers are increasingly seeking seasonal refreshments, including cooler home essentials like bedding and air conditioners."
   },
   {
-    "event": "Academic Seasonal Demand",
+    "event": "Academic Ramp-Up",
     "type": "Stationery & Education Supplies",
     "surge": "+50%",
-    "categories": ["Notebooks", "School Bags"],
-    "insight": "The start of the new semester has triggered a moderate increase in demand for stationery and education supplies, driven by students preparing for their Board Exams; suppliers should stock up on essential items."
+    "categories": ["Notebooks", "Fancy Pens"],
+    "insight": "Board exams are around the corner, driving up demand for essential stationery items, including notebooks and high-quality writing instruments."
   },
   {
-    "event": "Romantic Gift-Giving",
-    "type": "Gifts & Accessories",
+    "event": "Ethnic Wear Demand Cycle",
+    "type": "Clothing & Apparel",
+    "surge": "+50%",
+    "categories": ["Traditional Sarees", "Ghanaian Kente Prints"],
+    "insight": "As the festive season approaches, customers are looking for authentic ethnic wear, driving demand for traditional sarees and cultural prints."
+  },
+  {
+    "event": "Celebratory Confections",
+    "type": "Sweets & Bakery",
     "surge": "+150%",
-    "categories": ["Jewelry", "Flowers"],
-    "insight": "The approach of Valentine's Day has led to a surge in demand for gifts and accessories, particularly those related to romantic gestures such as jewelry and flowers; businesses should anticipate increased sales in this segment."
+    "categories": ["Traditional Desserts", "Pierre Hermé Couture Cakes"],
+    "insight": "Maha Shivaratri is just around the corner, and traditional sweets are fetching high demand, creating an immense surge in demand for premium and delectable confections."
   },
   {
-    "event": "Spring Refresh",
-    "type": "Home & Lifestyle",
-    "surge": "+60%",
-    "categories": ["Light Curtains", "Spring Bedding"],
-    "insight": "As the weather transitions to spring, customers are looking to refresh their homes and wardrobes; this shift in consumer behavior is driving an increase in demand for seasonal and weather-driven products such as light curtains and spring bedding."
-  },
-  {
-    "event": "Food Preferences Shift",
+    "event": "Melting Weather Effect",
     "type": "Food & Beverages",
-    "surge": "+40%",
-    "categories": ["Summer Fruits", "Cooling Beverages"],
-    "insight": "As the temperatures rise, customers are increasingly seeking refreshing food and beverages that cater to their changing preferences; suppliers should adapt their offerings to meet the growing demand for cooling and light refreshments."
+    "surge": "+30%",
+    "categories": ["Cooling Drinks", "Low-Calorie Snacks"],
+    "insight": "With warmer spring weather approaching, customers are reaching out for refreshing and light food and beverage options, promoting moderate growth in demand for cooling drinks and low-calorie snacks."
   }
 ]
