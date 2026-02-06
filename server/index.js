@@ -35,12 +35,12 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date() });
 });
 
-const { protect } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const inventoryRoutes = require('./routes/inventory');
 const vendorRoutes = require('./routes/vendors');
 const billingRoutes = require('./routes/billing');
 const intelRoutes = require('./routes/intel');
+const { protect } = require('./middleware/auth');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', protect, inventoryRoutes);
