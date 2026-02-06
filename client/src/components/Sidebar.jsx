@@ -14,9 +14,9 @@ const Sidebar = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
         { icon: Package, label: 'Inventory', path: '/inventory' },
-        { icon: Map, label: 'Demand Map', path: '/map' },
-        { icon: Users, label: 'Vendors', path: '/vendors' },
-        { icon: FileText, label: 'Audit Trail', path: '/audit' },
+        { icon: Map, label: 'Area Demand', path: '/map' },
+        { icon: Users, label: 'My Suppliers', path: '/vendors' },
+        { icon: FileText, label: 'History', path: '/audit' },
     ];
 
     const handleLogout = () => {

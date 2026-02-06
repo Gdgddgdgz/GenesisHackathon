@@ -33,7 +33,7 @@ const Vendors = () => {
             setNewVendor({ name: '', phone: '', categories: '', trust_score: 80 });
             fetchVendors();
         } catch (err) {
-            alert('Failed to add vendor');
+            alert('Failed to add supplier');
         }
     };
 
@@ -41,17 +41,18 @@ const Vendors = () => {
         setIsBulkOnboarding(true);
         setTimeout(() => {
             setIsBulkOnboarding(false);
-            alert('Bulk Onboarding Success: 12 vendors added from "mumbai_distributors.csv"');
+            alert('Bulk Add Success: 12 suppliers added from "mumbai_distributors.csv"');
         }, 3000);
     };
 
     const handleDeleteVendor = async (id) => {
-        if (!window.confirm('Remove this partner from your neural registry?')) return;
+        if (!window.confirm('Are you sure you want to remove this supplier?')) return;
         try {
             await api.delete(`/vendors/${id}`);
             fetchVendors();
         } catch (err) {
             console.error(err);
+            alert('Failed to delete supplier: ' + (err.response?.data?.error || err.message));
         }
     };
 
@@ -80,7 +81,7 @@ const Vendors = () => {
     if (loading) return (
         <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Authenticating Nodes...</p>
+            <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Loading Suppliers...</p>
         </div>
     );
 
@@ -89,8 +90,8 @@ const Vendors = () => {
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight">Vendor <span className="text-blue-500">Network</span></h1>
-                    <p className="text-[var(--text-secondary)] font-medium mt-1">Intelligent sourcing and partner reliability metrics</p>
+                    <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight">My <span className="text-blue-500">Suppliers</span></h1>
+                    <p className="text-[var(--text-secondary)] font-medium mt-1">Manage your suppliers and check their ratings</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <button
@@ -98,13 +99,13 @@ const Vendors = () => {
                         disabled={isBulkOnboarding}
                         className="px-6 py-3.5 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 text-[var(--text-secondary)]"
                     >
-                        {isBulkOnboarding ? 'Processing CSV...' : 'Bulk Onboarding'}
+                        {isBulkOnboarding ? 'Processing...' : 'Add Multiple Suppliers'}
                     </button>
                     <button
                         onClick={() => setShowForm(!showForm)}
                         className="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
                     >
-                        <UserPlus size={18} /> {showForm ? 'Cancel Registration' : 'Partner Registration'}
+                        <UserPlus size={18} /> {showForm ? 'Cancel' : 'Add New Supplier'}
                     </button>
                 </div>
             </div>
@@ -118,21 +119,41 @@ const Vendors = () => {
                         className="overflow-hidden"
                     >
                         <div className="glass-card p-8 mb-8">
-                            <h2 className="text-xl font-black text-[var(--text-primary)] mb-6">Partner Onboarding</h2>
+                            <h2 className="text-xl font-black text-[var(--text-primary)] mb-6">Add New Supplier</h2>
                             <form onSubmit={handleAddVendor} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
                                 <div>
-                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Entity Name</label>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Shop/Supplier Name</label>
                                     <input type="text" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-blue-500/50" value={newVendor.name} onChange={e => setNewVendor({ ...newVendor, name: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Secure Uplink (Phone)</label>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Phone Number</label>
                                     <input type="text" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-blue-500/50" value={newVendor.phone} onChange={e => setNewVendor({ ...newVendor, phone: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Specialization</label>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Items Supplied</label>
                                     <input type="text" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-blue-500/50" value={newVendor.categories} onChange={e => setNewVendor({ ...newVendor, categories: e.target.value })} />
                                 </div>
-                                <button type="submit" className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl">Onboard Partner</button>
+                                <div>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Rating</label>
+                                    <div className="flex gap-2 py-3 items-center h-[54px] bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl px-4">
+                                        {[...Array(5)].map((_, i) => (
+                                            <button
+                                                key={i}
+                                                type="button"
+                                                onClick={() => setNewVendor({ ...newVendor, trust_score: (i + 1) * 20 })}
+                                                className="focus:outline-none hover:scale-110 transition-transform"
+                                            >
+                                                <Star
+                                                    size={20}
+                                                    fill={i < (newVendor.trust_score / 20) ? "var(--neon-accent)" : "none"}
+                                                    className={i < (newVendor.trust_score / 20) ? "text-[var(--neon-accent)]" : "text-[var(--text-secondary)] opacity-30"}
+                                                />
+                                            </button>
+                                        ))}
+                                        <span className="ml-auto text-xs font-bold text-[var(--text-secondary)]">{newVendor.trust_score}%</span>
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl">Save Supplier</button>
                             </form>
                         </div>
                     </motion.div>
@@ -148,7 +169,7 @@ const Vendors = () => {
                         className="glass-card p-8 group flex flex-col relative overflow-hidden"
                     >
                         {/* Status Glow */}
-                        <div className={`absolute -top-10 -right-10 w-32 h-32 blur-[40px] rounded-full opacity-10 ${vendor.trust_score >= 80 ? 'bg-blue-500' : 'bg-amber-500'}`}></div>
+                        <div className={`absolute -top-10 -right-10 w-32 h-32 blur-[40px] rounded-full opacity-10 pointer-events-none ${vendor.trust_score >= 80 ? 'bg-blue-500' : 'bg-amber-500'}`}></div>
 
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex items-center gap-4">
@@ -157,13 +178,13 @@ const Vendors = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-black text-[var(--text-primary)]">{vendor.name}</h3>
-                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-1">Reliability Index</p>
+                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-1">Rating</p>
                                     {renderStars(vendor.trust_score)}
                                 </div>
                             </div>
                             <button
-                                onClick={() => handleDeleteVendor(vendor.id)}
-                                className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteVendor(vendor.id); }}
+                                className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 z-10"
                             >
                                 <Trash2 size={18} />
                             </button>
@@ -193,7 +214,7 @@ const Vendors = () => {
                             className="w-full py-4 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 border border-emerald-500/20"
                         >
                             <MessageCircle size={18} />
-                            WhatsApp AI Order
+                            Order on WhatsApp
                         </button>
                     </motion.div>
                 ))}

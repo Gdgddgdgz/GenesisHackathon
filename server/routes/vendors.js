@@ -15,11 +15,12 @@ router.get('/', async (req, res) => {
 
 // POST create vendor
 router.post('/', async (req, res) => {
-    const { name, phone, categories } = req.body;
+    const { name, phone, categories, trust_score } = req.body;
     try {
+        const score = trust_score || 80;
         const result = await db.query(
-            'INSERT INTO vendors (name, phone, categories, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
-            [name, phone, categories, req.user.id]
+            'INSERT INTO vendors (name, phone, categories, user_id, trust_score) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [name, phone, categories, req.user.id, score]
         );
 
         // Audit Log
@@ -28,7 +29,7 @@ router.post('/', async (req, res) => {
                 action: 'CREATE_VENDOR',
                 entity: 'Vendor',
                 entityId: result.rows[0].id.toString(),
-                details: { name, phone }
+                details: { name, phone, trust_score: score }
             });
         } catch (auditErr) {
             console.error('Audit Log Failed:', auditErr);
