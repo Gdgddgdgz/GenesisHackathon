@@ -15,13 +15,14 @@ const DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 // Helper to get color based on the amenity type
+// Helper to get color based on the amenity type
 const getMarkerStyle = (tags = {}) => {
     if (tags.amenity === 'place_of_worship') return { color: '#A855F7', label: 'Religious' };
-    if (tags.amenity === 'school' || tags.amenity === 'university' || tags.amenity === 'college') 
+    if (tags.amenity === 'school' || tags.amenity === 'university' || tags.amenity === 'college')
         return { color: '#F59E0B', label: 'Education' };
-    if (tags.shop || tags.landuse === 'commercial' || tags.landuse === 'retail') 
+    if (tags.shop || tags.landuse === 'commercial' || tags.landuse === 'retail')
         return { color: '#EC4899', label: 'Commercial' };
-    if (tags.leisure === 'park' || tags.leisure === 'garden' || tags.leisure === 'playground') 
+    if (tags.leisure === 'park' || tags.leisure === 'garden' || tags.leisure === 'playground')
         return { color: '#10B981', label: 'Park/Garden' };
     if (tags.landuse === 'residential') return { color: '#94A3B8', label: 'Residential' };
     return { color: '#3B82F6', label: 'Other' };
@@ -49,15 +50,15 @@ const MapAutoCenter = ({ activePointer }) => {
 
 // --- 2. MAIN COMPONENT ---
 
-const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, institutions }) => {
+const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, institutions, colorMapping }) => {
     const defaultCenter = [19.0760, 72.8777]; // Mumbai
     const center = shopLocation ? [shopLocation.lat, shopLocation.lon] : defaultCenter;
 
     return (
-        <MapContainer 
-            center={center} 
-            zoom={13} 
-            scrollWheelZoom={true} 
+        <MapContainer
+            center={center}
+            zoom={13}
+            scrollWheelZoom={true}
             className="h-full w-full rounded-xl z-0"
         >
             {/* Clean, minimalist tile server */}
@@ -74,8 +75,8 @@ const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, instituti
             {activePointer && (
                 <>
                     <Marker position={[activePointer.lat, activePointer.lng]} />
-                    <Circle 
-                        center={[activePointer.lat, activePointer.lng]} 
+                    <Circle
+                        center={[activePointer.lat, activePointer.lng]}
                         radius={5000} // 5km Radius
                         pathOptions={{ color: '#3b82f6', fillOpacity: 0.05, dashArray: '10, 10', weight: 1 }}
                     />
@@ -93,24 +94,24 @@ const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, instituti
                     .replace(/_/g, ' ');
 
                 return (
-                    <Circle 
+                    <Circle
                         key={`inst-${inst.id || idx}`}
                         center={[lat, lon]}
                         radius={70} // Size of the "tiny dot"
-                        pathOptions={{ 
-                            fillColor: style.color, 
-                            color: 'white', 
-                            weight: 1, 
+                        pathOptions={{
+                            fillColor: style.color,
+                            color: 'white',
+                            weight: 1,
                             fillOpacity: 0.9,
                             interactive: true // Ensures hover events work
                         }}
                     >
-                        {/* NEW: Tooltip for Hover functionality */}
-                        <Tooltip 
-                            direction="top" 
-                            offset={[0, -5]} 
-                            opacity={1} 
-                            sticky={true} // Follows the mouse slightly
+                        {/* Tooltip for Hover functionality */}
+                        <Tooltip
+                            direction="top"
+                            offset={[0, -5]}
+                            opacity={1}
+                            sticky={true}
                         >
                             <div className="px-1 py-0.5">
                                 <span className="block text-[8px] font-black uppercase text-blue-600 leading-none mb-1">
@@ -133,20 +134,107 @@ const LeafletMap = ({ points, shopLocation, onMapClick, activePointer, instituti
                 );
             })}
 
-            {/* C. Demand Heatmap Circles */}
+            {/* C. Demand Heatmap Circles (Semantic Zone Analysis) */}
             {points.map((point, idx) => {
-                if (!point.geometry?.coordinates) return null;
+                if (!point.geometry?.coordinates || !activePointer) return null;
                 const coords = [point.geometry.coordinates[1], point.geometry.coordinates[0]];
-                const multiplier = point.properties.multiplier || 1.0;
-                let zoneColor = multiplier >= 1.3 ? '#ef4444' : multiplier >= 1.1 ? '#f59e0b' : '#3b82f6';
+
+                // Radius Clipping
+                const distKm = Math.sqrt(
+                    Math.pow((coords[0] - activePointer.lat) * 111, 2) +
+                    Math.pow((coords[1] - activePointer.lng) * 85, 2)
+                );
+                if (distKm > 5) return null;
+
+                // --- 1. SEMANTIC CLASSIFICATION LOGIC ---
+                const radius = point.properties.radius || 1000;
+                let purpleCount = 0;
+                let greenCount = 0;
+                let greyCount = 0;
+
+                institutions.forEach(inst => {
+                    const iLat = inst.lat || inst.center?.lat;
+                    const iLon = inst.lon || inst.center?.lon;
+                    if (!iLat || !iLon) return;
+
+                    const dLat = (iLat - coords[0]) * 111000;
+                    const dLon = (iLon - coords[1]) * 85000;
+                    const distM = Math.sqrt(dLat * dLat + dLon * dLon);
+
+                    if (distM <= radius) {
+                        const style = getMarkerStyle(inst.tags);
+                        if (style.color === '#A855F7') purpleCount++;
+                        if (style.color === '#10B981' || style.color === '#EC4899') greenCount++;
+                        if (style.color === '#94A3B8') greyCount++;
+                    }
+                });
+
+                let inferredProfile = "INDUSTRIAL"; // Default
+                if (purpleCount >= 20) {
+                    inferredProfile = "RESIDENTIAL";
+                } else if (purpleCount > greenCount && purpleCount > greyCount) {
+                    inferredProfile = "RESIDENTIAL";
+                } else if (greenCount > greyCount && greenCount > purpleCount) {
+                    inferredProfile = "COMMERCIAL";
+                } else {
+                    inferredProfile = "INDUSTRIAL";
+                }
+
+
+                // --- 2. FORECAST MAPPING (Dynamic & Non-Arbitrary) ---
+                let tintColor = 'transparent';
+                let tintOpacity = 0;
+
+                if (colorMapping && colorMapping.affected_zones) {
+                    const affected = colorMapping.affected_zones.map(z => z.toUpperCase());
+
+                    // Match inferred profile against AI affected zones
+                    // Adding RETAIL as a match for Commercial areas
+                    const isAffected = affected.includes(inferredProfile) ||
+                        (inferredProfile === "COMMERCIAL" && affected.includes("RETAIL"));
+
+                    if (isAffected) {
+                        tintColor = colorMapping.color_for_affected_zones === 'green' ? '#10b981' : '#ef4444';
+                        tintOpacity = 0.25;
+                    } else {
+                        // If not affected by the specific surge, use the "other" color (usually Red for risk/neutral)
+                        tintColor = colorMapping.color_for_other_zones === 'red' ? '#ef4444' : '#10b981';
+                        tintOpacity = 0.2;
+                    }
+                }
+
+                const zoneColors = {
+                    'RESIDENTIAL': '#3b82f6',
+                    'COMMERCIAL': '#ec4899',
+                    'INDUSTRIAL': '#94a3b8'
+                };
+                const baseColor = zoneColors[inferredProfile] || '#94a3b8';
 
                 return (
-                    <Circle
-                        key={`heat-${idx}`}
-                        center={coords}
-                        radius={point.properties.radius || 300}
-                        pathOptions={{ fillColor: zoneColor, color: 'transparent', fillOpacity: 0.4 }}
-                    />
+                    <React.Fragment key={`zone-wrap-${idx}`}>
+                        <Circle
+                            center={coords}
+                            radius={radius}
+                            pathOptions={{
+                                color: baseColor,
+                                weight: 2,
+                                fillOpacity: 0.05,
+                                fillColor: baseColor,
+                                dashArray: '5, 10'
+                            }}
+                        />
+                        {tintColor !== 'transparent' && (
+                            <Circle
+                                center={coords}
+                                radius={radius}
+                                pathOptions={{
+                                    color: 'transparent',
+                                    fillColor: tintColor,
+                                    fillOpacity: tintOpacity
+                                }}
+                            />
+                        )}
+                    </React.Fragment>
                 );
             })}
         </MapContainer>

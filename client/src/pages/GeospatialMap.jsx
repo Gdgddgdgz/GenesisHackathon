@@ -19,12 +19,15 @@ const GeospatialMap = () => {
     const [activePointer, setActivePointer] = useState(null);
     const [isScanning, setIsScanning] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [selectedCategory, setSelectedCategory] = useState('Groceries');
+    const [colorMapping, setColorMapping] = useState(null);
+
 
     // --- 1. Fetch Heatmap Data (Backend) ---
     const fetchHeatmap = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:8000/heatmap?segment=apparel`);
+            const res = await axios.get(`http://localhost:8000/heatmap?segment=${selectedCategory}`);
             setPoints(res.data.features);
             setShopLocation(res.data.shop_location);
         } catch (error) {
@@ -33,13 +36,29 @@ const GeospatialMap = () => {
         setLoading(false);
     };
 
+    // --- 2. Fetch AI Forecast & Interpretation ---
+    const fetchAIInterpretation = async () => {
+        try {
+            const seasonalRes = await axios.get(`http://localhost:8000/forecast/seasonal?category=${selectedCategory}`);
+            const insightsText = (seasonalRes.data || []).map(p => p.insight).join(" ");
+
+            const forecastRes = await axios.post('http://localhost:8000/interpret-forecast', {
+                forecast_text: insightsText || `Current demand signals for ${selectedCategory} are stable.`,
+                category: selectedCategory
+            });
+            setColorMapping(forecastRes.data);
+        } catch (err) {
+            console.error("Mapping error:", err);
+        }
+    };
+
     // --- 2. Handle Map Clicks & Overpass Query ---
     const abortControllerRef = React.useRef(null);
     const handleMapClick = async (lat, lng) => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
-        
+
         // 3. Create a new controller for the current request
         abortControllerRef.current = new AbortController();
 
@@ -60,7 +79,7 @@ const GeospatialMap = () => {
             const res = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, {
                 signal: abortControllerRef.current.signal
             });
-            
+
             // Clean the data immediately
             const cleaned = (res.data.elements || []).map(el => {
                 const tags = el.tags || {};
@@ -69,20 +88,16 @@ const GeospatialMap = () => {
                     id: el.id,
                     lat: el.lat || el.center?.lat,
                     lon: el.lon || el.center?.lon,
-                    type: rawType.replace(/_/g, ' '), // This is your "ID" as requested
+                    type: rawType.toUpperCase().replace(/ /g, '_'), // Normalize for interpreter
+                    rawType: rawType.replace(/_/g, ' '),
                     name: tags.name || `Unnamed ${rawType.replace(/_/g, ' ')}`,
-                    tags: tags // keep original tags for icon logic
+                    tags: tags
                 };
-            }).filter(item => item.lat && item.lon); // Remove any broken data
+            }).filter(item => item.lat && item.lon);
 
             setInstitutions(cleaned);
         } catch (err) {
-            if (axios.isCancel(err)) {
-                console.log("Previous request cancelled successfully.");
-            } else {
-                console.error("Overpass error or timeout:", err);
-                // On a real timeout, ensure scanning state turns off
-            }
+            if (!axios.isCancel(err)) console.error("Overpass error:", err);
         } finally {
             setIsScanning(false);
         }
@@ -101,7 +116,7 @@ const GeospatialMap = () => {
 
             if (res.data && res.data.length > 0) {
                 const { lat, lon } = res.data[0];
-                
+
                 // 1. Move the map and scan the new area
                 handleMapClick(parseFloat(lat), parseFloat(lon));
             } else {
@@ -112,7 +127,10 @@ const GeospatialMap = () => {
         }
     };
 
-    useEffect(() => { fetchHeatmap(); }, []);
+    useEffect(() => {
+        fetchHeatmap();
+        fetchAIInterpretation();
+    }, [selectedCategory]);
 
     // Helper to get Icon for Sidebar
     const getSidebarIcon = (tags) => {
@@ -128,14 +146,30 @@ const GeospatialMap = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black flex items-center gap-2">
-                        Geospatial <span className="text-blue-500">Synth</span> <Radar className="animate-pulse text-blue-500" />
-                    </h1>
+                    <div className="flex flex-col">
+                        <h1 className="text-3xl font-black flex items-center gap-2">
+                            Geospatial <span className="text-blue-500">Synth</span> <Radar className="animate-pulse text-blue-500" />
+                        </h1>
+                        <div className="flex items-center gap-4 mt-2">
+                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Active Forecast Domain:</span>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase px-3 py-1 rounded-md outline-none cursor-pointer hover:bg-blue-500/20 transition-all"
+                            >
+                                <option value="Groceries">Groceries</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Furniture">Furniture</option>
+                                <option value="Electrical_Appliances">Electrical Appliances</option>
+                                <option value="Flowers">Flowers</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* NEW: Search Bar */}
                 <div className="relative w-full md:w-96">
-                    <input 
+                    <input
                         type="text"
                         placeholder="Search address (e.g. Bandra, Mumbai)..."
                         className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all"
@@ -148,20 +182,39 @@ const GeospatialMap = () => {
             </header>
 
             <div className="flex flex-1 gap-6 overflow-hidden">
-                <div className="absolute bottom-6 left-6 z-[1000] bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-2xl">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Map Legend</h4>
-                    <div className="space-y-2">
-                        {CATEGORIES.map(cat => (
-                            <div key={cat.label} className="flex items-center gap-3">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-200 leading-none">{cat.label}</p>
-                                    <p className="text-[8px] text-slate-500">{cat.desc}</p>
+                {/* Map Legend (Moved to Right & Enhanced) */}
+                <div className="absolute bottom-6 right-6 z-[1000] bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-2xl w-48">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-white/10 pb-2">Map Legend</h4>
+
+                    <div className="space-y-4">
+                        {/* 1. Zone Types */}
+                        <div className="space-y-2">
+                            <p className="text-[8px] font-black uppercase text-slate-500 mb-1">Zone Categories</p>
+                            {CATEGORIES.map(cat => (
+                                <div key={cat.label} className="flex items-center gap-3">
+                                    <div className="w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: cat.color, border: '2px solid white' }} />
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-200 leading-none">{cat.label}</p>
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+
+                        {/* 2. Opportunity Tints */}
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                            <p className="text-[8px] font-black uppercase text-slate-500 mb-1">AI Opportunity Signals</p>
+                            <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 rounded-md bg-[#10B981] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                <p className="text-[10px] font-bold text-emerald-400 leading-none">High Opportunity</p>
                             </div>
-                        ))}
+                            <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 rounded-md bg-[#EF4444] shadow-[0_0_10px_rgba(239,68,68,0.3)]" />
+                                <p className="text-[10px] font-bold text-rose-400 leading-none">Neutral / Risk</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
 
                 {/* Map Container */}
                 <div className="flex-1 glass-card relative rounded-xl overflow-hidden border border-white/10">
@@ -175,12 +228,13 @@ const GeospatialMap = () => {
                             </div>
                         </div>
                     )}
-                    <LeafletMap 
+                    <LeafletMap
                         points={points}
                         shopLocation={shopLocation}
                         onMapClick={handleMapClick}
                         activePointer={activePointer}
                         institutions={institutions}
+                        colorMapping={colorMapping}
                     />
                 </div>
 
