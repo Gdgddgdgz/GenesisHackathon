@@ -499,23 +499,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Telemetry Feed — matches rest of UI */}
-            <div className="glass-card overflow-hidden rounded-xl border border-[var(--border-glass)] p-6">
-                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[var(--border-glass)]">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Live Telemetry Stream</span>
-                </div>
-                <div className="space-y-2 font-mono text-xs">
-                    <p className="text-[var(--text-secondary)]">[{new Date().toLocaleTimeString()}] <span className="text-blue-400 font-bold uppercase ml-2">[NETWORK]</span> Uplink established. SME-Alpha synchronization active.</p>
-                    {products.some(p => p.current_stock < p.min_level) && (
-                        <p className="text-red-400 font-black">[{new Date().toLocaleTimeString()}] <span className="uppercase">[CRITICAL]</span> Stockout hazard detected in primary cluster.</p>
-                    )}
-                    {festivalData && festivalData[0] && (
-                        <p className="text-amber-400 font-bold">[{new Date().toLocaleTimeString()}] <span className="uppercase">[NEURAL]</span> Strategic pattern match: {festivalData[0]?.event} imminent.</p>
-                    )}
-                    <p className="text-[var(--text-secondary)]">[{new Date().toLocaleTimeString()}] <span className="text-emerald-400 font-bold uppercase ml-2">[LEDGER]</span> Audit hash #442a-x9 generated successfully.</p>
-                </div>
-            </div>
+            
         </div>
     );
 };

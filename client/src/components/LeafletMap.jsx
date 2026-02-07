@@ -7,8 +7,8 @@ import 'leaflet/dist/leaflet.css';
 
 // Fix for Leaflet marker icons
 const DefaultIcon = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+    iconUrl: 'http://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'http://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41]
 });
@@ -99,8 +99,8 @@ const LeafletMap = ({ points, shopLocation, outlets = [], customPins = [], onMap
         >
             {/* Clean, minimalist tile server */}
             <TileLayer
-                attribution='&copy; CARTO'
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
 
             <MapClickHandler onMapClick={onMapClick} />

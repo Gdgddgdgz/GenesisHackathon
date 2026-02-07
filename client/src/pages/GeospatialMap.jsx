@@ -98,6 +98,12 @@ const GeospatialMap = () => {
                 if (lat == null || lng == null) continue;
 
                 const params = new URLSearchParams({ segment: selectedCategory, lat, lon: lng });
+                const refLat = first?.lat || MUMBAI_CENTER.lat;
+                const refLng = first?.lng || MUMBAI_CENTER.lng;
+
+                params.set('lat', refLat);
+                params.set('lon', refLng);
+
                 const res = await axios.get(`http://localhost:8000/heatmap?${params.toString()}`);
                 if (res.data?.features) {
                     allFeatures = [...allFeatures, ...res.data.features];
