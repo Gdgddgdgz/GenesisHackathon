@@ -364,7 +364,7 @@ const BillingCounter = () => {
                         <button
                             onClick={handleGenerateBill}
                             disabled={cart.length === 0 || loading}
-                            className={`w-full py-5 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${cart.length === 0 || loading
+                            className={`w-full flex items-center justify-center py-5 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${cart.length === 0 || loading
                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                 : 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-3 text-base'
                                 }`}
@@ -373,8 +373,7 @@ const BillingCounter = () => {
                                 <>Updating Inventory...</>
                             ) : (
                                 <>
-                                    Generate Bill & Update Stock
-                                    <ChevronRight size={20} />
+                                    Generate Bill <ChevronRight size={20} />
                                 </>
                             )}
                         </button>
@@ -410,7 +409,9 @@ const BillingCounter = () => {
                                 <p className="text-[10px] text-slate-500 italic text-center py-2">All stock levels are healthy.</p>
                             )}
                         </div>
-                        <button className="w-full mt-4 py-2 border border-slate-700 rounded-lg text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-all">
+                        <button className="w-full mt-4 py-2 border border-slate-700 rounded-lg text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-all" onClick={() => {
+                            //
+                        }}>
                             View Full Inventory
                         </button>
                     </div>

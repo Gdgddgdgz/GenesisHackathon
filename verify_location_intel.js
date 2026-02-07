@@ -5,7 +5,7 @@
  * Run: node verify_location_intel.js
  */
 
-const BASE_URL = 'http://localhost:5002';
+const BASE_URL = 'http://localhost:5000';
 
 // Test coordinates across different Indian regions
 const TEST_COORDINATES = [

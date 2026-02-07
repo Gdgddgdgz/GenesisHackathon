@@ -35,7 +35,7 @@ const Sidebar = () => {
                     className="w-10 h-10 object-contain rounded-xl shadow-lg shadow-blue-600/10 brightness-110"
                 />
                 <div>
-                    <h1 className="text-xl font-extrabold tracking-tight">Restockery</h1>
+                    <h1 className="text-xl font-extrabold text-[var(--text-primary)] tracking-tight">Restockery</h1>
                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Genesis Hackathon</span>
                 </div>
             </div>
@@ -72,7 +72,7 @@ const Sidebar = () => {
                         <User className="text-slate-400" size={20} />
                     </div>
                     <div className="overflow-hidden">
-                        <p className="text-sm font-bold truncate">{user?.name || 'User'}</p>
+                        <p className="text-sm font-bold text-[var(--text-primary)] truncate">{user?.name || 'User'}</p>
                         <p className="text-xs text-slate-500 truncate">{user?.email}</p>
                     </div>
                 </div>
