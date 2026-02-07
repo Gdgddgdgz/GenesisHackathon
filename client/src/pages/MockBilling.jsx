@@ -197,13 +197,13 @@ const BillingCounter = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Billing Counter</h1>
-                    <p className="text-slate-500">Create new sales and update inventory instantly.</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">Billing Counter</h1>
+                    <p className="text-[var(--text-secondary)]">Create new sales and update inventory instantly.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
-                        <User size={16} className="text-slate-400" />
-                        <span className="text-xs font-bold text-slate-600">Active Counter: Main Store</span>
+                    <div className="bg-[var(--bg-card)] px-4 py-2 rounded-xl border border-[var(--border-glass)] shadow-sm flex items-center gap-2">
+                        <User size={16} className="text-[var(--text-secondary)]" />
+                        <span className="text-xs font-bold text-[var(--text-primary)]">Active Counter: Main Store</span>
                     </div>
                 </div>
             </div>
@@ -211,15 +211,15 @@ const BillingCounter = () => {
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 {/* Left: Product Search */}
                 <div className="xl:col-span-12">
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div className="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border-glass)] shadow-sm flex items-center gap-4">
                         <div className="relative flex-1">
-                            <Search className="absolute left-4 top-3 text-slate-400" size={18} />
+                            <Search className="absolute left-4 top-3 text-[var(--text-secondary)]" size={18} />
                             <input
                                 type="text"
                                 placeholder="Search products by name or SKU..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-12 pl-12 pr-4 bg-slate-50 rounded-lg border-none focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                className="w-full h-12 pl-12 pr-4 bg-[var(--bg-main)] rounded-lg border border-[var(--border-glass)] focus:ring-2 focus:ring-blue-500 outline-none text-sm text-[var(--text-primary)] transition-all"
                             />
                         </div>
                         {searchTerm && (
@@ -233,16 +233,16 @@ const BillingCounter = () => {
                     </div>
 
                     {searchTerm && filteredProducts.length > 0 && (
-                        <div className="mt-2 bg-white rounded-xl border border-slate-200 shadow-xl max-h-64 overflow-y-auto z-50 absolute w-[calc(100%-48px)] xl:w-[calc(100%-64px)]">
+                        <div className="mt-2 bg-[var(--bg-card)] backdrop-blur-xl rounded-xl border border-[var(--border-glass)] shadow-2xl max-h-64 overflow-y-auto z-50 absolute w-[calc(100%-48px)] xl:w-[calc(100%-64px)]">
                             {filteredProducts.map(p => (
                                 <div
                                     key={p.id}
                                     onClick={() => { addToCart(p); setSearchTerm(''); }}
-                                    className="p-4 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-none flex items-center justify-between group"
+                                    className="p-4 hover:bg-blue-500/10 cursor-pointer border-b border-[var(--border-glass)] last:border-none flex items-center justify-between group"
                                 >
                                     <div>
-                                        <p className="text-sm font-bold text-slate-800">{p.name}</p>
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">{p.sku} • ₹{p.unit_price}</p>
+                                        <p className="text-sm font-bold text-[var(--text-primary)]">{p.name}</p>
+                                        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest">{p.sku} • ₹{p.unit_price}</p>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${p.current_stock < 20 ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
@@ -258,65 +258,65 @@ const BillingCounter = () => {
 
                 {/* Main Content: Cart & Summary */}
                 <div className="xl:col-span-8">
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
-                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                            <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                                <ShoppingCart size={18} className="text-blue-600" />
+                    <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-glass)] shadow-sm overflow-hidden min-h-[500px] flex flex-col">
+                        <div className="bg-white/5 px-6 py-4 border-b border-[var(--border-glass)] flex justify-between items-center">
+                            <h2 className="font-bold text-[var(--text-primary)] flex items-center gap-2">
+                                <ShoppingCart size={18} className="text-blue-500" />
                                 Current Bill Items
                             </h2>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{billNumber}</span>
+                            <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">{billNumber}</span>
                         </div>
 
                         <div className="flex-1 overflow-y-auto">
                             {cart.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center p-12 text-center">
-                                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 text-[var(--text-secondary)] opacity-30">
                                         <ShoppingCart size={32} />
                                     </div>
-                                    <h3 className="font-bold text-slate-400">Bill is empty</h3>
-                                    <p className="text-sm text-slate-300 mt-1 max-w-xs">Search and add items to generate a sales invoice.</p>
+                                    <h3 className="font-bold text-[var(--text-secondary)]">Bill is empty</h3>
+                                    <p className="text-sm text-[var(--text-secondary)] opacity-50 mt-1 max-w-xs">Search and add items to generate a sales invoice.</p>
                                 </div>
                             ) : (
                                 <table className="w-full text-left">
-                                    <thead className="bg-slate-50/50">
+                                    <thead className="bg-white/5">
                                         <tr>
-                                            <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Item Description</th>
-                                            <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Price</th>
-                                            <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Qty</th>
-                                            <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Subtotal</th>
+                                            <th className="px-6 py-3 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Item Description</th>
+                                            <th className="px-6 py-3 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest text-center">Price</th>
+                                            <th className="px-6 py-3 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest text-center">Qty</th>
+                                            <th className="px-6 py-3 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest text-right">Subtotal</th>
                                             <th className="px-6 py-3"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-[var(--border-glass)]">
                                         {cart.map(item => (
-                                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <p className="text-sm font-bold text-slate-800">{item.name}</p>
-                                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">{item.sku}</p>
+                                                    <p className="text-sm font-bold text-[var(--text-primary)]">{item.name}</p>
+                                                    <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest">{item.sku}</p>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <p className="text-sm font-medium text-slate-600">₹{item.unit_price}</p>
+                                                    <p className="text-sm font-medium text-[var(--text-secondary)]">₹{item.unit_price}</p>
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-6 py-4 text-center">
                                                     <div className="flex items-center justify-center gap-3">
                                                         <button
                                                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                            className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-100"
+                                                            className="w-6 h-6 rounded border border-[var(--border-glass)] flex items-center justify-center text-[var(--text-secondary)] hover:bg-white/5"
                                                         >-</button>
-                                                        <span className="text-sm font-bold w-6 text-center">{item.quantity}</span>
+                                                        <span className="text-sm font-bold w-6 text-center text-[var(--text-primary)]">{item.quantity}</span>
                                                         <button
                                                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                            className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-100"
+                                                            className="w-6 h-6 rounded border border-[var(--border-glass)] flex items-center justify-center text-[var(--text-secondary)] hover:bg-white/5"
                                                         >+</button>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <p className="text-sm font-black text-slate-800">₹{(item.unit_price * item.quantity).toLocaleString()}</p>
+                                                    <p className="text-sm font-black text-[var(--text-primary)]">₹{(item.unit_price * item.quantity).toLocaleString()}</p>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <button
                                                         onClick={() => removeFromCart(item.id)}
-                                                        className="p-2 text-slate-200 hover:text-red-500 transition-colors"
+                                                        className="p-2 text-slate-500 hover:text-red-500 transition-colors"
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
@@ -332,31 +332,31 @@ const BillingCounter = () => {
 
                 {/* Right: Summary & Action */}
                 <div className="xl:col-span-4 space-y-6">
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Bill Summary</h3>
+                    <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-glass)] shadow-sm p-6 space-y-6">
+                        <h3 className="text-xs font-black text-[var(--text-secondary)] uppercase tracking-widest">Bill Summary</h3>
 
                         <div className="space-y-4">
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-500">Items Total</span>
-                                <span className="font-bold text-slate-800">₹{calculateTotal().toLocaleString()}</span>
+                                <span className="text-[var(--text-secondary)]">Items Total</span>
+                                <span className="font-bold text-[var(--text-primary)]">₹{calculateTotal().toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-500">Tax (GST 0%)</span>
-                                <span className="font-bold text-slate-800 text-xs">Included</span>
+                                <span className="text-[var(--text-secondary)]">Tax (GST 0%)</span>
+                                <span className="font-bold text-[var(--text-primary)] text-xs">Included</span>
                             </div>
-                            <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
+                            <div className="pt-4 border-t border-[var(--border-glass)] flex justify-between items-end">
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payable Amount</p>
-                                    <p className="text-3xl font-black text-slate-900 leading-tight">₹{calculateTotal().toLocaleString()}</p>
+                                    <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Payable Amount</p>
+                                    <p className="text-3xl font-black text-[var(--text-primary)] leading-tight">₹{calculateTotal().toLocaleString()}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex items-center gap-3">
+                            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
                                 <Package size={20} />
                             </div>
-                            <p className="text-[11px] font-bold text-blue-800 leading-relaxed">
+                            <p className="text-[11px] font-bold text-blue-400 leading-relaxed">
                                 Inventory will be automatically updated across all systems upon bill generation.
                             </p>
                         </div>
@@ -365,8 +365,8 @@ const BillingCounter = () => {
                             onClick={handleGenerateBill}
                             disabled={cart.length === 0 || loading}
                             className={`w-full py-5 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${cart.length === 0 || loading
-                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-3 text-base'
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-3 text-base'
                                 }`}
                         >
                             {loading ? (
@@ -381,11 +381,11 @@ const BillingCounter = () => {
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-right-2">
+                        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-right-2">
                             <AlertCircle className="text-red-500 shrink-0" size={18} />
                             <div>
-                                <h4 className="text-xs font-bold text-red-700 uppercase tracking-wide">Validation Error</h4>
-                                <p className="text-xs text-red-600 mt-0.5 leading-relaxed">{error}</p>
+                                <h4 className="text-xs font-bold text-red-400 uppercase tracking-wide">Validation Error</h4>
+                                <p className="text-xs text-red-300 mt-0.5 leading-relaxed">{error}</p>
                             </div>
                         </div>
                     )}

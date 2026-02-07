@@ -21,7 +21,13 @@ const logout = () => {
 };
 
 const getCurrentUser = () => {
-    return JSON.parse(localStorage.getItem('user'));
+    try {
+        const user = localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
+    } catch (e) {
+        console.error("Failed to parse user from localStorage:", e);
+        return null;
+    }
 };
 
 const authService = {

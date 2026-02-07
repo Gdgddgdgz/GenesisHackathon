@@ -21,6 +21,7 @@ const Dashboard = () => {
     const [outlets, setOutlets] = useState([]);
     const [selectedLocationId, setSelectedLocationId] = useState('');
     const [selectedLocation, setSelectedLocation] = useState(null); // { id, location, lat, lon }
+    const [selectedCategory, setSelectedCategory] = useState('Healthcare & Wellness');
     const [isInferenceLoading, setIsInferenceLoading] = useState(false);
 
     const handleAutoReplenish = async () => {
@@ -53,16 +54,25 @@ const Dashboard = () => {
         }
     };
 
-    const fetchInsights = async (locationLat, locationLon) => {
+    const fetchInsights = async (locationLat, locationLon, items = [], category = selectedCategory) => {
         setIsInferenceLoading(true);
         try {
+            // Market-Driven Seasonal Outlook (The "Predictions like before")
             const params = new URLSearchParams();
             if (locationLat != null && locationLon != null) {
                 params.set('lat', locationLat);
                 params.set('lon', locationLon);
             }
+            params.set('category', category);
+
             const res = await aiApi.get(`/forecast/seasonal?${params.toString()}`);
-            setFestivalData(res.data);
+            if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+                setFestivalData(res.data);
+            } else {
+                // Tactical Fallback if market analysis is empty
+                const aiAnalysis = await aiApi.post('/analyze/inventory', items);
+                setFestivalData(aiAnalysis.data);
+            }
         } catch (err) {
             console.error("Inference Error:", err);
         }
@@ -90,10 +100,12 @@ const Dashboard = () => {
             const forecast = forecastRes.data.forecast.map(day => {
                 const dataPoint = {
                     name: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-                    stock: runningStock,
-                    demand: day.predicted_demand,
+                    stock: Math.round(runningStock),
+                    demand: Math.round(day.predicted_demand),
                 };
-                runningStock = Math.max(0, runningStock - day.predicted_demand + 15);
+                // Subtle depletion (~0.8x demand) to keep the lines separated and visible
+                runningStock = Math.max(5, runningStock - (day.predicted_demand * 0.8));
+                if (runningStock < 10) runningStock += 30; // Emergency refill spike
                 return dataPoint;
             });
             setChartData(forecast);
@@ -114,20 +126,44 @@ const Dashboard = () => {
                 setProducts(productsData);
                 setOutlets(outletsData);
 
-                const totalProducts = productsData.length;
+                const totalValuation = productsData.reduce((sum, p) => sum + (p.current_stock * p.unit_price), 0);
                 const lowStock = productsData.filter(p => p.current_stock < (p.min_level ?? 50)).length;
                 const deadStockItems = productsData.filter(p => {
-                    if (!p.last_sold_date) return false;
+                    if (!p.last_sold_date) return true; // Treat products never sold as dead stock candidates
                     const days = (new Date() - new Date(p.last_sold_date)) / (1000 * 60 * 60 * 24);
                     return days > 90;
                 });
                 setDeadStock(deadStockItems);
 
+                const deadStockValue = deadStockItems.reduce((sum, p) => sum + (p.current_stock * p.unit_price), 0);
+
                 setStats([
-                    { title: 'Total Inventory', value: totalProducts.toString(), icon: Package, trend: 12 },
-                    { title: 'Critical Alerts', value: lowStock.toString(), icon: AlertTriangle, alert: lowStock > 0, trend: -5 },
-                    { title: 'Dead Stock Assets', value: deadStockItems.length.toString(), icon: ShieldCheck, trend: 0 },
-                    { title: 'Projected Savings', value: '₹18.4K', icon: DollarSign, trend: 24 },
+                    {
+                        title: 'Total Inventory',
+                        value: productsData.reduce((sum, p) => sum + p.current_stock, 0).toLocaleString(),
+                        icon: Package,
+                        trend: 12
+                    },
+                    {
+                        title: 'Critical Alerts',
+                        value: lowStock.toString(),
+                        icon: AlertTriangle,
+                        alert: lowStock > 0,
+                        trend: -5
+                    },
+                    {
+                        title: 'Dead Stock Assets',
+                        value: deadStockItems.length.toString(),
+                        label: `₹${(deadStockValue / 1000).toFixed(1)}K Value`,
+                        icon: ShieldCheck,
+                        trend: 0
+                    },
+                    {
+                        title: 'Inventory Valuation',
+                        value: `₹${(totalValuation / 1000).toFixed(1)}K`,
+                        icon: DollarSign,
+                        trend: 24
+                    },
                 ]);
 
                 const firstOutlet = outletsData.find(o => o.lat != null && o.lon != null) || outletsData[0];
@@ -142,7 +178,7 @@ const Dashboard = () => {
                 const salesHistoryRes = await api.get(`/inventory/products/${targetProduct.id}/sales-history`).catch(() => null);
                 const historicalSales = salesHistoryRes?.data?.daily_demand;
                 await fetchForecast(targetProduct.id, targetProduct.current_stock, lat, lon, historicalSales);
-                fetchInsights(lat, lon);
+                fetchInsights(lat, lon, productsData);
                 setLoading(false);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
@@ -198,28 +234,58 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Location selector for forecast context */}
+            {/* Intelligence Context Hub */}
             <div className="flex items-center gap-6 py-2 border-y border-white/5">
-                <div className="flex-1 flex items-center gap-4">
-                    <div className="p-2 bg-blue-500/10 rounded-lg">
-                        <MapPin className="text-blue-500" size={18} />
+                <div className="flex-1 flex items-center gap-8">
+                    {/* Location Selector */}
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 bg-blue-500/10 rounded-lg">
+                            <MapPin className="text-blue-500" size={18} />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Forecast Location</label>
+                            <select
+                                value={selectedLocationId}
+                                onChange={handleLocationChange}
+                                className="bg-transparent text-sm font-bold text-white focus:outline-none border-none p-0 cursor-pointer hover:text-blue-400 transition-colors appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_center] bg-[length:1.2em] bg-no-repeat"
+                            >
+                                <option value="" className="bg-[#0B1121]">Select location</option>
+                                {outlets.map((o) => (
+                                    <option key={o.id} value={String(o.id)} className="bg-[#0B1121]">
+                                        {o.location || o.geo_display_name || `Outlet ${o.id}`}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Forecast Location</label>
-                        <select
-                            value={selectedLocationId}
-                            onChange={handleLocationChange}
-                            className="bg-transparent text-sm font-bold text-white focus:outline-none border-none p-0 cursor-pointer hover:text-blue-400 transition-colors appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_center] bg-[length:1.2em] bg-no-repeat"
-                        >
-                            <option value="" className="bg-[#0B1121]">Select location</option>
-                            {outlets.map((o) => (
-                                <option key={o.id} value={String(o.id)} className="bg-[#0B1121]">
-                                    {o.location || o.geo_display_name || `Outlet ${o.id}`}
-                                </option>
-                            ))}
-                        </select>
+
+                    {/* Market Category Selector */}
+                    <div className="flex items-center gap-4 border-l border-white/5 pl-8">
+                        <div className="p-2 bg-emerald-500/10 rounded-lg">
+                            <ShieldCheck className="text-emerald-500" size={18} />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Intelligence Category</label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => {
+                                    setSelectedCategory(e.target.value);
+                                    fetchInsights(selectedLocation?.lat, selectedLocation?.lon, products, e.target.value);
+                                }}
+                                className="bg-transparent text-sm font-bold text-white focus:outline-none border-none p-0 cursor-pointer hover:text-emerald-400 transition-colors appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2310b981%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_center] bg-[length:1.2em] bg-no-repeat"
+                            >
+                                <option value="Food & Drinks" className="bg-[#0B1121]">Food & Drinks</option>
+                                <option value="Clothes & Apparel" className="bg-[#0B1121]">Clothes & Apparel</option>
+                                <option value="Stationery & Education" className="bg-[#0B1121]">Stationery & Education</option>
+                                <option value="Electronics" className="bg-[#0B1121]">Electronics</option>
+                                <option value="Home Essentials" className="bg-[#0B1121]">Home Essentials</option>
+                                <option value="Healthcare & Wellness" className="bg-[#0B1121]">Healthcare & Wellness</option>
+                                <option value="Flowers" className="bg-[#0B1121]">Flowers</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
+
                 <div className="hidden md:flex items-center gap-6 px-6 border-l border-white/5">
                     <div className="text-right">
                         <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Reasoning Engine</p>
@@ -319,8 +385,8 @@ const Dashboard = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-glass)" opacity={0.5} />
-                                <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} stroke="var(--text-secondary)" opacity={0.7} />
-                                <YAxis fontSize={11} axisLine={false} tickLine={false} stroke="var(--text-secondary)" opacity={0.7} />
+                                <XAxis dataKey="name" fontSize={11} axisLine={false} tickLine={false} stroke="var(--text-secondary)" opacity={0.7} tick={{ fill: 'var(--text-secondary)' }} />
+                                <YAxis fontSize={11} axisLine={false} tickLine={false} stroke="var(--text-secondary)" opacity={0.7} domain={[0, 'auto']} tick={{ fill: 'var(--text-secondary)' }} />
                                 <Tooltip
                                     contentStyle={{
                                         background: 'var(--bg-card)',
@@ -415,7 +481,7 @@ const Dashboard = () => {
                                 >
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex flex-col gap-1">
-                                            <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-500/20">{insight.type || 'Market Driver'}</span>
+                                            <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-500/20">{insight.type || selectedCategory}</span>
                                             <span className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">{selectedLocation?.location || 'All locations'} Cluster</span>
                                         </div>
                                     </div>

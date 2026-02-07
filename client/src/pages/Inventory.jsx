@@ -100,20 +100,39 @@ const Inventory = () => {
                     >
                         <div className="glass-card p-8 mb-8">
                             <h2 className="text-xl font-black text-white mb-6">Asset Registration</h2>
-                            <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+                            <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 items-end">
                                 <div className="lg:col-span-2">
                                     <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Asset Name</label>
-                                    <input type="text" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+                                    <input type="text" required placeholder="e.g. Premium Cotton Shirt" className="w-full p-3 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">SKU Code</label>
-                                    <input type="text" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.sku} onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} />
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">SKU Registry</label>
+                                    <input type="text" required placeholder="SKU-XYZ" className="w-full p-3 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-xs font-mono text-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all" value={newProduct.sku} onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Valuation (₹)</label>
-                                    <input type="number" required className="w-full p-3.5 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.unit_price} onChange={e => setNewProduct({ ...newProduct, unit_price: e.target.value })} />
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Category</label>
+                                    <select required className="w-full p-3 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}>
+                                        <option value="" disabled>Select Segment</option>
+                                        <option value="Groceries">Groceries</option>
+                                        <option value="Electronics">Electronics</option>
+                                        <option value="Furniture">Furniture</option>
+                                        <option value="Electrical_Appliances">Appliance</option>
+                                        <option value="Apparel">Apparel</option>
+                                        <option value="Food">Food & Drink</option>
+                                        <option value="Flowers">Flowers</option>
+                                    </select>
                                 </div>
-                                <button type="submit" className="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl">Commit</button>
+                                <div>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Price (₹)</label>
+                                    <input type="number" required placeholder="0.00" className="w-full p-3 bg-[var(--bg-main)] border border-[var(--border-glass)] rounded-xl text-[var(--text-primary)] font-black focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.unit_price} onChange={e => setNewProduct({ ...newProduct, unit_price: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2 ml-1">Quantity</label>
+                                    <input type="number" required placeholder="Initial Stock" className="w-full p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 font-black focus:outline-none focus:ring-2 focus:ring-emerald-500/50" value={newProduct.current_stock} onChange={e => setNewProduct({ ...newProduct, current_stock: e.target.value })} />
+                                </div>
+                                <div className="lg:col-span-6 flex justify-end">
+                                    <button type="submit" className="px-12 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]">Commit to Registry</button>
+                                </div>
                             </form>
                         </div>
                     </motion.div>

@@ -18,13 +18,23 @@ const mockData = {
         { id: 11, user_id: 1, name: 'Marigold (Genda) Garland', sku: 'FL-002', category: 'Flowers', unit_price: 40, current_stock: 200, last_sold_date: '2026-02-06', price_volatility: 10, market_sentiment: 'Stable', min_level: 100, max_level: 500 },
         { id: 12, user_id: 1, name: 'Jasmine (Mogra) Strings', sku: 'FL-003', category: 'Flowers', unit_price: 120, current_stock: 80, last_sold_date: '2026-02-04', price_volatility: 15, market_sentiment: 'Stable', min_level: 50, max_level: 150 },
         { id: 13, user_id: 1, name: 'Fresh Lotus (Pink)', sku: 'FL-004', category: 'Flowers', unit_price: 250, current_stock: 8, last_sold_date: '2026-02-01', price_volatility: 30, market_sentiment: 'Bullish', min_level: 20, max_level: 50 },
-        { id: 14, user_id: 1, name: 'Hibiscus (Loose)', sku: 'FL-005', category: 'Flowers', unit_price: 25, current_stock: 500, last_sold_date: '2026-02-06', price_volatility: 5, market_sentiment: 'Stable', min_level: 100, max_level: 1000 }
+        { id: 14, user_id: 1, name: 'Hibiscus (Loose)', sku: 'FL-005', category: 'Flowers', unit_price: 25, current_stock: 500, last_sold_date: '2026-02-06', price_volatility: 5, market_sentiment: 'Stable', min_level: 100, max_level: 1000 },
+
+        // DEAD STOCK SAMPLES
+        { id: 101, user_id: 1, name: 'Vintage Desk Lamp', sku: 'HG-901', category: 'Furniture', unit_price: 4500, current_stock: 12, last_sold_date: '2025-05-10', price_volatility: 5, market_sentiment: 'Stale' },
+        { id: 102, user_id: 1, name: 'Retro Bluetooth Radio', sku: 'EL-442', category: 'Electronics', unit_price: 3200, current_stock: 8, last_sold_date: '2025-08-22', price_volatility: 8, market_sentiment: 'Stale' }
     ],
     thresholds: [
         { product_id: 1, min_level: 50, max_level: 200 },
-        { product_id: 4, min_level: 100, max_level: 500 }
+        { product_id: 4, min_level: 100, max_level: 500 },
+        { product_id: 101, min_level: 5, max_level: 20 },
+        { product_id: 102, min_level: 3, max_level: 15 }
     ],
     transactions: [],
+    outlets: [
+        { id: 1, user_id: 1, location: 'Mumbai Central', geo_display_name: 'Mumbai Central, Mumbai, Maharashtra', lat: 18.9696, lon: 72.8230 },
+        { id: 2, user_id: 1, location: 'Andheri West', geo_display_name: 'Andheri West, Mumbai, Maharashtra', lat: 19.1136, lon: 72.8697 }
+    ],
     vendors: [
         { id: 1, user_id: 1, name: 'Sai Traders', phone: '+91 98765 43210', categories: ['Grocery', 'Grains'], trust_score: 92, last_delivery_time: new Date().toISOString() },
         { id: 2, user_id: 1, name: 'Metro Wholesalers', phone: '+91 91234 56789', categories: ['Spices', 'Snacks'], trust_score: 85, last_delivery_time: new Date().toISOString() },
