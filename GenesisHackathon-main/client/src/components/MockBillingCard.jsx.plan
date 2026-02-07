@@ -1,0 +1,9 @@
+# Mock Billing Frontend Component
+
+`MockBillingCard.jsx` will provide a simple interface for users to simulate sales of specific products.
+
+## Component Features
+- Dropdown to select products.
+- Quantity selector.
+- "Generate Demo Bill" button.
+- Success state with auto-refresh trigger.

@@ -1,0 +1,45 @@
+2026-02-07 12:44:26,712 - INFO - RAW LLM RESPONSE (Attempt 1):
+[
+  {
+    "event": "Increased Demand for Cotton Garments",
+    "type": "Clothes & Apparel",
+    "categories": ["Cotton Kurtas", "Cotton Sarees"],
+    "insight": "Given the Indian Summer Onset, there will be a surge in demand for breathable and light-weight clothing. Cotton is a preferred fabric during this season, and we expect a high velocity of stock movement for cotton garments. Additionally, with the approaching Indian Wedding Season, there will be a high demand for traditional attire, further increasing the demand for cotton kurtas and sarees."
+  },
+  {
+    "event": "Sherwani and Lehenga Sales to Peak",
+    "type": "Clothes & Apparel",
+    "categories": ["Sherwanis", "Lehengas"],
+    "insight": "The Indian Wedding Season is approaching, and we expect a significant increase in demand for traditional attire such as sherwanis and lehengas. With the high footfall expected during the Weekend Surge, we anticipate a high sales velocity for these items. Additionally, the upcoming Valentine's Day will also contribute to the demand for formal wear, further increasing the sales of sherwanis and lehengas."
+  },
+  {
+    "event": "Footwear Sales to Increase",
+    "type": "Clothes & Apparel",
+    "categories": ["Sandals", "Slip-Ons"],
+    "insight": "Given the Indian Summer Onset, there will be a high demand for comfortable and breathable footwear. With the Weekend Surge approaching, we expect a high footfall in shopping areas, leading to an increase in sales of sandals and slip-ons. Additionally, the approaching Ramzan Start will also contribute to the demand for comfortable footwear, further increasing the sales of these items."
+  }
+]
+
+2026-02-07 12:44:51,597 - INFO - Endpoint hit: /forecast/seasonal with category=Clothes & Apparel
+2026-02-07 12:44:58,582 - INFO - RAW LLM RESPONSE (Attempt 1):
+[
+  {
+    "event": "Increased Demand for Breathable Wear",
+    "type": "Clothes & Apparel",
+    "categories": ["Cotton Kurtas", "Linen Sarees"],
+    "insight": "Given the Indian Summer Onset, we expect a surge in demand for breathable wear. As temperatures rise, consumers will opt for lightweight, natural fabrics like cotton and linen. Stocking up on cotton kurtas and linen sarees will be crucial for meeting this demand."
+  },
+  {
+    "event": "Sherwani and Lehenga Sales to Peak",
+    "type": "Clothes & Apparel",
+    "categories": ["Sherwanis", "Lehengas"],
+    "insight": "With the Indian Wedding Season in full swing, we anticipate a significant increase in sales of traditional attire like sherwanis and lehengas. Stocking up on these items will be essential to capitalize on this opportunity."
+  },
+  {
+    "event": "Footwear Sales to Surge on Weekend",
+    "type": "Clothes & Apparel",
+    "categories": ["Cotton Sandals", "Leather Shoes"],
+    "insight": "As the Weekend Surge approaches, we expect a high footfall in shopping areas. To capitalize on this, stocking up on comfortable footwear like cotton sandals and leather shoes will be crucial to meet the anticipated demand."
+  }
+]
+
